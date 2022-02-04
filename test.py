@@ -1,3 +1,4 @@
-import scipy.stats as sp
-
-sp.bernoulli.pmf
+from math import *
+print(inf)
+print(float("inf"))
+print(inf == float("inf"))

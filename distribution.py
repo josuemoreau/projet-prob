@@ -2,6 +2,7 @@ from typing import List, Tuple, Any, Callable, TypeVar, Optional, Generic, Dict
 import scipy as scp
 import scipy.special as scpspec
 import math
+from math import log, comb, inf
 from utils import *
 
 A = TypeVar('A')
@@ -67,22 +68,60 @@ import scipy.stats as sp
 
 def bernoulli(p):
     assert(0 <= p <= 1)
-    sp.bernoulli.
+    sample  = lambda: sp.bernoulli(p)
+    logpdf  = lambda x: sp.bernoulli.logpmf(x, p)
+    mean    = lambda: sp.bernoulli.mean(p)
+    var     = lambda: sp.bernoulli.var(p)
+    support = Support([0., 1.], [log(1.-p), log(p)], [1.-p, p])
+    return Distrib(sample, logpdf, mean, var, support)
 
 def binomial(p, n):
-    pass
+    assert(0 <= p <= 1 and 0 <= n)
+    sample  = lambda: sp.binomial(n, p)
+    logpdf  = lambda x: sp.binomial.logpmf(x, n, p)
+    mean    = lambda: sp.binomial.mean(n, p)
+    var     = lambda: sp.binomial.var(n, p)
+    support_values = list(range(n+1))
+    support_probs = [comb(n, k) for k in support_values]
+    support_logits = [log(x) for x in support_probs]
+    support = Support(support_values, support_logits, support_probs)
+    return Distrib(sample, logpdf, mean, var, support)
 
-def dirac():
-    pass
+def dirac(v):
+    sample = lambda: v
+    logpdf = lambda x: 0. if x == v else -inf
+    mean   = lambda: v
+    var    = lambda: 0.
+    return Distrib(sample, logpdf, mean, var)
 
 def support():
+    print("Non implémanté")
     pass
 
-def beta():
-    pass
+def beta(a, b):
+    assert(0. < a and 0. < b)
+    sample  = lambda: sp.beta(a, b)
+    logpdf  = lambda x: sp.beta.logpdf(x, a, b)
+    mean    = lambda: sp.beta.mean(a, b)
+    var     = lambda: sp.beta.var(a, b)
+    return Distrib(sample, logpdf, mean, var)
 
-def gaussian():
-    pass
+def gaussian(mu, sigma):
+    assert(0. < sigma)
+    sample  = lambda: sp.norm(loc=mu, scale=sigma)
+    logpdf  = lambda x: sp.norm.logpdf(x, loc=mu, scale=sigma)
+    mean    = lambda: sp.norm.mean(loc=mu, scale=sigma)
+    var     = lambda: sp.norm.var(loc=mu, scale=sigma)
+    return Distrib(sample, logpdf, mean, var)
 
-def uniform():
-    pass
+def uniform(a, b):
+    assert(a <= b)
+    #scipy.stats.uniform(loc=0, scale=1) tire selon une loi uniforme
+    #dans l'intervalle [loc, loc+scale]
+    loc = a
+    scale = b-a
+    sample  = lambda: sp.uniform(loc=loc, scale=scale)
+    logpdf  = lambda x: sp.uniform.logpdf(x, loc=loc, scale=scale)
+    mean    = lambda: sp.uniform.mean(loc=loc, scale=scale)
+    var     = lambda: sp.uniform.var(loc=loc, scale=scale)
+    return Distrib(sample, logpdf, mean, var)
