@@ -67,6 +67,12 @@ class Distrib(Generic[A]):
         else:
             pass
     
+    def plot(self):
+        plt.hist(self.get_samples(), 50)
+        plt.title('Distribution')
+        plt.grid(True)
+        plt.show()
+
 
 def bernoulli(p):
     assert(0 <= p <= 1)
