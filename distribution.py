@@ -1,9 +1,11 @@
 from typing import List, Tuple, Any, Callable, TypeVar, Optional, Generic, Dict
 import scipy as scp
+import scipy.stats as sp
 import scipy.special as scpspec
 import math
 from math import log, comb, inf
 from utils import *
+import matplotlib.pyplot as plt
 
 A = TypeVar('A')
 
@@ -30,6 +32,7 @@ class Distrib(Generic[A]):
     def __init__(self, sample, logpdf, mean=None, var=None, support=None,
                  n=10000):
         samples = [sample() for i in range(n)]
+        #samples = sample(size=n)
 
         self._sample = sample
         self._logpdf = logpdf
@@ -63,12 +66,11 @@ class Distrib(Generic[A]):
             values = scpspec.logsumexp 
         else:
             pass
-
-import scipy.stats as sp
+    
 
 def bernoulli(p):
     assert(0 <= p <= 1)
-    sample  = lambda: sp.bernoulli(p)
+    sample  = lambda: sp.bernoulli.rvs(p)
     logpdf  = lambda x: sp.bernoulli.logpmf(x, p)
     mean    = lambda: sp.bernoulli.mean(p)
     var     = lambda: sp.bernoulli.var(p)
@@ -77,10 +79,10 @@ def bernoulli(p):
 
 def binomial(p, n):
     assert(0 <= p <= 1 and 0 <= n)
-    sample  = lambda: sp.binomial(n, p)
-    logpdf  = lambda x: sp.binomial.logpmf(x, n, p)
-    mean    = lambda: sp.binomial.mean(n, p)
-    var     = lambda: sp.binomial.var(n, p)
+    sample  = lambda: sp.binom.rvs(n, p)
+    logpdf  = lambda x: sp.binom.logpmf(x, n, p)
+    mean    = lambda: sp.binom.mean(n, p)
+    var     = lambda: sp.binom.var(n, p)
     support_values = list(range(n+1))
     support_probs = [comb(n, k) for k in support_values]
     support_logits = [log(x) for x in support_probs]
@@ -99,8 +101,8 @@ def support():
     pass
 
 def beta(a, b):
-    assert(0. < a and 0. < b)
-    sample  = lambda: sp.beta(a, b)
+    assert(a > 0. and b > 0.)
+    sample  = lambda: sp.beta.rvs(a, b)
     logpdf  = lambda x: sp.beta.logpdf(x, a, b)
     mean    = lambda: sp.beta.mean(a, b)
     var     = lambda: sp.beta.var(a, b)
@@ -108,7 +110,7 @@ def beta(a, b):
 
 def gaussian(mu, sigma):
     assert(0. < sigma)
-    sample  = lambda: sp.norm(loc=mu, scale=sigma)
+    sample  = lambda: sp.norm.rvs(loc=mu, scale=sigma)
     logpdf  = lambda x: sp.norm.logpdf(x, loc=mu, scale=sigma)
     mean    = lambda: sp.norm.mean(loc=mu, scale=sigma)
     var     = lambda: sp.norm.var(loc=mu, scale=sigma)
@@ -120,8 +122,18 @@ def uniform(a, b):
     #dans l'intervalle [loc, loc+scale]
     loc = a
     scale = b-a
-    sample  = lambda: sp.uniform(loc=loc, scale=scale)
+    sample  = lambda: sp.uniform.rvs(loc=loc, scale=scale)
     logpdf  = lambda x: sp.uniform.logpdf(x, loc=loc, scale=scale)
     mean    = lambda: sp.uniform.mean(loc=loc, scale=scale)
     var     = lambda: sp.uniform.var(loc=loc, scale=scale)
     return Distrib(sample, logpdf, mean, var)
+
+if __name__ == '__main__':
+    p = 0.5
+    x1 = bernoulli(p)
+    x2 = binomial(p, 3)
+    x3 = dirac(3)
+    x4 = beta(2, 5)
+    x5 = gaussian(0, 1)
+    x6 = uniform(0, 2)
+    print('main')
