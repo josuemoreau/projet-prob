@@ -1,6 +1,6 @@
 from typing import Callable, TypeVar, Generic
 from typing_extensions import Protocol
-from distribution import Distrib
+from distribution import Distrib, uniform_support
 
 # Rejection Sampling
 #
@@ -52,6 +52,7 @@ class RejectionSampling(Generic[A, B]):
         values = []
         for i in range(n):
             values.append(exec(i))
+        return uniform_support(values)
 
 
 if __name__ == "__main__":
