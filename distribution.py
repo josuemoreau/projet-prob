@@ -1,4 +1,5 @@
 from typing import List, Tuple, Any, Callable, TypeVar, Optional, Generic, Dict
+from typing_extensions import Protocol
 import scipy as scp
 import scipy.stats as sp
 import scipy.special as scpspec
@@ -8,6 +9,18 @@ from utils import *
 import matplotlib.pyplot as plt
 
 A = TypeVar('A')
+B = TypeVar('B', covariant=True)
+
+
+class Sample(Generic[B], Protocol):
+    def __call__(self) -> B:
+        pass
+
+
+class LogPdf(Generic[B], Protocol):
+    def __call__(self, x):
+        # type : B -> float
+        pass
 
 
 class Support(Generic[A]):
@@ -22,8 +35,8 @@ class Support(Generic[A]):
 
 
 class Distrib(Generic[A]):
-    _sample: Callable[[], A]
-    _logpdf: Callable[[A], float]
+    _sample: Sample[A]
+    _logpdf: LogPdf[A]
     _mean: Optional[Callable[[], float]]
     _var: Optional[Callable[[], float]]
     _samples: List[A]
@@ -32,7 +45,7 @@ class Distrib(Generic[A]):
     def __init__(self, sample, logpdf, mean=None, var=None, support=None,
                  n=10000):
         samples = [sample() for i in range(n)]
-        #samples = sample(size=n)
+        # samples = sample(size=n)
 
         self._sample = sample
         self._logpdf = logpdf
@@ -41,10 +54,10 @@ class Distrib(Generic[A]):
         self._samples = samples
         self._support = support
 
-    def draw(self):
+    def draw(self) -> A:
         return self._sample()
 
-    def get_samples(self):
+    def get_samples(self) -> List[A]:
         return self._samples
 
     def get_support(self, shrink=False):
@@ -56,17 +69,17 @@ class Distrib(Generic[A]):
             values, probs = shrink(values, probs)
             return Support(values, [math.log(x) for x in probs], probs)
 
-    def logpdf(self, x):
+    def logpdf(self, x: A) -> float:
         return self._logpdf(x)
 
-    def mean_generic(self, transform) -> float:
-        if self._mean is not None:
-            return self.mean()
-        elif self._support is not None:
-            values = scpspec.logsumexp 
-        else:
-            pass
-    
+    # def mean_generic(self, transform) -> float:
+    #     if self._mean is not None:
+    #         return self.mean()
+    #     elif self._support is not None:
+    #         values = scpspec.logsumexp
+    #     else:
+    #         pass
+
     def plot(self):
         plt.hist(self.get_samples(), 50)
         plt.title('Distribution')
