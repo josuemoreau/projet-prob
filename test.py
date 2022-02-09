@@ -4,7 +4,7 @@ p, n = 0.5, 100000
 #test2 = [sp.bernoulli.rvs(p) for _ in range(n)]
 test3 = sp.bernoulli.rvs(p, size=n)'''
 
-import numpy as np
+'''import numpy as np
 import matplotlib.pyplot as plt
 
 # Fixing random state for reproducibility
@@ -24,4 +24,7 @@ plt.text(60, .025, r'$\mu=100,\ \sigma=15$')
 plt.xlim(40, 160)
 plt.ylim(0, 0.03)
 plt.grid(True)
-plt.show()
+plt.show()'''
+
+from math import nextafter
+print(nextafter(0, 1))

@@ -5,7 +5,7 @@ import scipy.stats as sp
 import scipy.special as scpspec
 import math
 from math import log, comb, inf
-from utils import *
+import utils
 import matplotlib.pyplot as plt
 
 A = TypeVar('A')
@@ -66,7 +66,7 @@ class Distrib(Generic[A]):
         else:
             values = self._support.values
             probs = self._support.probs
-            values, probs = shrink(values, probs)
+            values, probs = utils.shrink(values, probs)
             return Support(values, [math.log(x) for x in probs], probs)
 
     def logpdf(self, x: A) -> float:
@@ -81,7 +81,7 @@ class Distrib(Generic[A]):
     #         pass
 
     def plot(self):
-        plt.hist(self.get_samples(), 50)
+        plt.hist(self.get_samples(), 100)
         plt.title('Distribution')
         plt.grid(True)
         plt.show()
@@ -115,9 +115,16 @@ def dirac(v):
     var    = lambda: 0.
     return Distrib(sample, logpdf, mean, var)
 
-def support():
-    print("Non implémanté")
-    pass
+def support(values, logits):
+    assert(len(values) == len(logits))
+    probs = utils.normalize(logits)
+    sp_distrib = sp.rv_discrete(values=(values, probs))
+    sample  = lambda: sp_distrib.rvs()
+    logpdf  = lambda x: sp_distrib.logpmf(x)
+    mean    = lambda: sp_distrib.mean()
+    var     = lambda: sp_distrib.var()
+    support = Support(values, probs, logits)
+    return Distrib(sample, logpdf, mean, var, support)
 
 def beta(a, b):
     assert(a > 0. and b > 0.)
@@ -148,11 +155,15 @@ def uniform(a, b):
     return Distrib(sample, logpdf, mean, var)
 
 if __name__ == '__main__':
-    p = 0.5
+    '''p = 0.5
     x1 = bernoulli(p)
     x2 = binomial(p, 3)
     x3 = dirac(3)
     x4 = beta(2, 5)
     x5 = gaussian(0, 1)
-    x6 = uniform(0, 2)
+    x6 = uniform(0, 2)'''
+    logits = [log(2), log(3), log(5)]
+    values = [0, 1, 3]
+    y = support(values, logits)
+    y.plot()
     print('main')

@@ -1,4 +1,6 @@
 from typing import List, Tuple, Any, Callable, TypeVar, Optional, Generic, Dict
+import scipy.special as spspec
+from math import log, exp
 
 def shrink(values: List[Any], probs: List[float]) \
         -> Tuple[List[Any], List[float]]:
@@ -9,3 +11,10 @@ def shrink(values: List[Any], probs: List[float]) \
         else:
             d[value] = prob
     return (list(d.keys()), list(d.values()))
+
+def normalize(scores):
+    norm = exp(spspec.logsumexp(scores))
+    return [exp(elem) / norm for elem in scores]
+
+if __name__ == '__main__':
+    print(normalize([log(2), log(3), log(5)]))
