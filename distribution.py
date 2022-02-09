@@ -126,6 +126,10 @@ def support(values, logits):
     support = Support(values, probs, logits)
     return Distrib(sample, logpdf, mean, var, support)
 
+def uniform_support(values):
+    logits = [0]*len(values)
+    return support(values, logits)
+
 def beta(a, b):
     assert(a > 0. and b > 0.)
     sample  = lambda: sp.beta.rvs(a, b)
