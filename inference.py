@@ -172,6 +172,6 @@ class EnumerationSampling():
         return support(values, [log(p) for p in probs])
 
 if __name__ == "__main__":
-    from examples import funny_bernoulli
+    from funny_bernoulli import funny_bernoulli
     d = EnumerationSampling.infer(funny_bernoulli, None)
     d.plot()
