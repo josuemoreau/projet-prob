@@ -114,7 +114,11 @@ class Distrib(Generic[A]):
     #         pass
 
     def plot(self):
-        plt.hist(self.get_samples(), 100)
+        if self._support is not None:
+            supp = self.get_support(shrink=True)
+            plt.bar(supp.values, supp.probs)
+        else:
+            plt.hist(self.get_samples(), 100)
         plt.title('Distribution')
         plt.grid(True)
         plt.show()
