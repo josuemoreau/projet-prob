@@ -33,6 +33,9 @@ class Support(Generic[A]):
         self.values = values
         self.logits = logits
         self.probs = probs
+    
+    def __iter__(self):
+        return zip(self.values, self.logits, self.probs)
 
 
 class LazyList(MutableSequence):

@@ -16,5 +16,9 @@ def normalize(scores):
     norm = exp(spspec.logsumexp(scores))
     return [exp(elem) / norm for elem in scores]
 
+def normalize_probs(probs):
+    norm = sum(probs)
+    return [elem/norm for elem in probs]
+
 if __name__ == '__main__':
     print(normalize([log(2), log(3), log(5)]))

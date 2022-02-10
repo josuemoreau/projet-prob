@@ -1,5 +1,5 @@
 from distribution import bernoulli
-from inference import RejectionSampling, ImportanceSampling
+from inference import RejectionSampling, ImportanceSampling, EnumerationSampling
 
 
 def funny_bernoulli(prob, _x):
