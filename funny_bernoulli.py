@@ -1,5 +1,5 @@
 from distribution import bernoulli
-from inference import RejectionSampling
+from inference import RejectionSampling, ImportanceSampling
 
 
 def funny_bernoulli(prob, _x):
@@ -15,4 +15,14 @@ if __name__ == '__main__':
     rs = RejectionSampling(funny_bernoulli, None)
     dist = rs.infer()
     supp = dist.get_support(shrink=True)
+    for i in range(len(supp.values)):
+        print(f"{supp.values[i]} {supp.probs[i]}")
+    dist.plot()
+
+    print("-- Funny Bernoulli, Basic Importance Sampling --")
+    impsamp = ImportanceSampling(funny_bernoulli, None)
+    dist = impsamp.infer()
+    supp = dist.get_support(shrink=True)
+    for i in range(len(supp.values)):
+        print(f"{supp.values[i]} {supp.probs[i]}")
     dist.plot()
