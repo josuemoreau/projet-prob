@@ -100,7 +100,7 @@ class Distrib(Generic[A]):
             values = self._support.values
             probs = self._support.probs
             values, probs = utils.shrink(values, probs)
-            return Support(values, [math.log(x) for x in probs], probs)
+            return Support(values, [math.log(x) if x != 0. else -float('inf') for x in probs], probs)
 
     def logpdf(self, x: A) -> float:
         return self._logpdf(x)
