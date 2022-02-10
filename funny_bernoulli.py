@@ -26,3 +26,10 @@ if __name__ == '__main__':
     for i in range(len(supp.values)):
         print(f"{supp.values[i]} {supp.probs[i]}")
     dist.plot()
+
+    print("-- Funny Bernoulli, Enumeration Sampling --")
+    dist = EnumerationSampling.infer(funny_bernoulli, None)
+    supp = dist.get_support(shrink=True)
+    for i in range(len(supp.values)):
+        print(f"{supp.values[i]} {supp.probs[i]}")
+    dist.plot()

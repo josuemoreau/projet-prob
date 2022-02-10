@@ -133,7 +133,7 @@ def bernoulli(p):
     logpdf  = lambda x: sp.bernoulli.logpmf(x, p)
     mean    = lambda: sp.bernoulli.mean(p)
     var     = lambda: sp.bernoulli.var(p)
-    support = Support([0., 1.], [log(1.-p), log(p)], [1.-p, p])
+    support = Support([0, 1], [log(1.-p), log(p)], [1.-p, p])
     return Distrib(sample, logpdf, mean, var, support)
 
 def binomial(p, n):
