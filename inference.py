@@ -48,16 +48,13 @@ class RejectionSampling(Generic[A, B]):
 
     def infer(self, n=1000):
         prob = self.Prob()
-
-        def exec(i: int): #Faire ça avec while pour éviter la limite de récurrence ?
-            try:
-                return self._model(prob, self._data)
-            except Reject:
-                return exec(i)
-
         values = []
-        for i in range(n):
-            values.append(exec(i))
+        while len(values) < n:
+            try:
+                value = self._model(prob, self._data)
+            except Reject:
+                continue
+            values.append(value)
         return uniform_support(values)
 
 
