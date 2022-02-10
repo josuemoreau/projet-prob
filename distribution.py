@@ -123,7 +123,7 @@ def support(values, logits):
     logpdf  = lambda x: sp_distrib.logpmf(x)
     mean    = lambda: sp_distrib.mean()
     var     = lambda: sp_distrib.var()
-    support = Support(values, probs, logits)
+    support = Support(values, logits, probs)
     return Distrib(sample, logpdf, mean, var, support)
 
 def uniform_support(values):
@@ -157,6 +157,7 @@ def uniform(a, b):
     mean    = lambda: sp.uniform.mean(loc=loc, scale=scale)
     var     = lambda: sp.uniform.var(loc=loc, scale=scale)
     return Distrib(sample, logpdf, mean, var)
+
 
 if __name__ == '__main__':
     '''p = 0.5
