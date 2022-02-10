@@ -7,6 +7,7 @@ import math
 from math import log, comb, inf
 import utils
 import matplotlib.pyplot as plt
+from collections.abc import MutableSequence
 
 A = TypeVar('A')
 B = TypeVar('B', covariant=True)
@@ -34,18 +35,49 @@ class Support(Generic[A]):
         self.probs = probs
 
 
+class LazyList(MutableSequence):
+    def __init__(self, f, n):
+        self._eval = [False for i in range(n)]
+        self._list = [None for i in range(n)]
+        self._f = f
+
+    def __len__(self):
+        return len(self._list)
+
+    def __getitem__(self, i):
+        if self._eval[i]:
+            return self._list[i]
+        else:
+            x = self._f(i)
+            self._list[i] = x
+            return x
+
+    def __setitem__(self, i, v):
+        self._list[i] = v
+        self._eval[i] = True
+
+    def __delitem__(self, i):
+        del self._list[i]
+        del self._eval[i]
+
+    def insert(self, i, v):
+        self._list.insert(i, v)
+        self._eval.insert(i, True)
+
+
 class Distrib(Generic[A]):
     _sample: Sample[A]
     _logpdf: LogPdf[A]
     _mean: Optional[Callable[[], float]]
     _var: Optional[Callable[[], float]]
-    _samples: List[A]
+    _samples: LazyList
     _support: Optional[Support[A]]
 
     def __init__(self, sample, logpdf, mean=None, var=None, support=None,
                  n=10000):
-        samples = [sample() for i in range(n)]
+        # samples = [sample() for i in range(n)]
         # samples = sample(size=n)
+        samples = LazyList(lambda _i: sample(), n)
 
         self._sample = sample
         self._logpdf = logpdf
@@ -57,13 +89,14 @@ class Distrib(Generic[A]):
     def draw(self) -> A:
         return self._sample()
 
-    def get_samples(self) -> List[A]:
+    def get_samples(self) -> LazyList:
         return self._samples
 
-    def get_support(self, shrink=False):
+    def get_support(self, shrink=False) -> Optional[Support[A]]:
         if not shrink:
             return self._support
         else:
+            assert (self._support is not None)
             values = self._support.values
             probs = self._support.probs
             values, probs = utils.shrink(values, probs)
