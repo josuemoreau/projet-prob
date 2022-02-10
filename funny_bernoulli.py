@@ -13,6 +13,6 @@ def funny_bernoulli(prob, _x):
 if __name__ == '__main__':
     print("-- Funny Bernoulli, Basic Rejection Sampling --")
     rs = RejectionSampling(funny_bernoulli, None)
-    dist = rs.infer(n=100)
+    dist = rs.infer()
     supp = dist.get_support(shrink=True)
     dist.plot()
