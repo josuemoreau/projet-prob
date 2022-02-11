@@ -135,8 +135,8 @@ class EnumerationSampling():
         if self.sample_idx >= len(self.path):
             #On est sûr dans ce cas que sample_idx == len(path)
             if distr._support is None:
-                raise UndefinedSupport("""The support is undefined or infinite.
-                Exhaustive Sampling can't be used in that case.""")
+                raise UndefinedSupport("The support is undefined or infinite. "\
+                "Exhaustive Sampling can't be used in that case.")
             support = distr.get_support(shrink=True)
             self.path.append([0, support.values, support.logits])
 

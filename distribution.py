@@ -78,8 +78,8 @@ class Distrib(Generic[A]):
 
     def __init__(self, sample, logpdf, mean=None, var=None, support=None,
                  n=10000):
-        # samples = [sample() for i in range(n)]
-        # samples = sample(size=n)
+        #samples = [sample() for i in range(n)]
+        #samples = sample(size=n)
         samples = LazyList(lambda _i: sample(), n)
 
         self._sample = sample
@@ -116,10 +116,26 @@ class Distrib(Generic[A]):
     #     else:
     #         pass
 
-    def plot(self):
-        if self._support is not None:
+    def plot(self, plot_with_support=False, plot_style='scatter'):
+        if plot_with_support:
+            if self._support is None:
+                print("Pas de support à plot")
+                return
             supp = self.get_support(shrink=True)
-            plt.bar(supp.values, supp.probs)
+            if plot_style == 'bar':
+                plt.bar(supp.values, supp.probs)
+            elif plot_style == 'scatter':
+                plt.scatter(supp.values, supp.probs)
+                plot_y_size = max(supp.probs)
+                plt.ylim((-plot_y_size*1/20, plot_y_size*21/20))
+            elif plot_style == 'line':
+                plt.plot(*zip(*sorted(zip(supp.values, supp.probs))))
+                plot_y_size = max(supp.probs)
+                plt.ylim((-plot_y_size*1/20, plot_y_size*21/20))
+            else:
+                print("L'argument plot_style est invalide. Il doit être "\
+                    "'bar', 'scatter', ou 'line'")
+                return
         else:
             plt.hist(self.get_samples(), 100)
         plt.title('Distribution')
@@ -158,11 +174,13 @@ def dirac(v):
 def support(values, logits):
     assert(len(values) == len(logits))
     probs = utils.normalize(logits)
-    sp_distrib = sp.rv_discrete(values=(values, probs))
-    sample  = lambda: sp_distrib.rvs()
-    logpdf  = lambda x: sp_distrib.logpmf(x)
-    mean    = lambda: sp_distrib.mean()
-    var     = lambda: sp_distrib.var()
+    sp_distrib = sp.rv_discrete(values=(range(len(values)), probs))
+    sample  = lambda: values[sp_distrib.rvs()]
+    logpdf  = lambda x: utils.findprob(values, probs, x)
+    _mean = sum(values[i]*probs[i] for i in range(len(values)))
+    _var = sum((values[i] - _mean)**2 for i in range(len(values))) / len(probs)
+    mean    = lambda: _mean
+    var     = lambda: _var
     support = Support(values, logits, probs)
     return Distrib(sample, logpdf, mean, var, support)
 

@@ -20,5 +20,11 @@ def normalize_probs(probs):
     norm = sum(probs)
     return [elem/norm for elem in probs]
 
+def findprob(values, probs, v):
+    try:
+        return probs[values.index(v)]
+    except ValueError:
+        return 0
+
 if __name__ == '__main__':
     print(normalize([log(2), log(3), log(5)]))
