@@ -123,7 +123,7 @@ class Distrib(Generic[A]):
                 return
             supp = self.get_support(shrink=True)
             if plot_style == 'bar':
-                plt.bar(supp.values, supp.probs)
+                plt.bar(supp.values, supp.probs, width=0.05)
             elif plot_style == 'scatter':
                 plt.scatter(supp.values, supp.probs)
                 plot_y_size = max(supp.probs)
@@ -149,7 +149,13 @@ def bernoulli(p):
     logpdf  = lambda x: sp.bernoulli.logpmf(x, p)
     mean    = lambda: sp.bernoulli.mean(p)
     var     = lambda: sp.bernoulli.var(p)
-    support = Support([0, 1], [log(1.-p), log(p)], [1.-p, p])
+    if p == 0:
+        logits = [-float('inf'), 0]
+    elif p == 1:
+        logits = [0, -float('inf')]
+    else:
+        logits = [log(1.-p), log(p)]
+    support = Support([0, 1], logits, [1.-p, p])
     return Distrib(sample, logpdf, mean, var, support)
 
 def binomial(p, n):

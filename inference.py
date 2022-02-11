@@ -147,9 +147,10 @@ class EnumerationSampling():
     def assume(self, p: bool):
         if not p:
             raise Reject
-            
+    
     def observe(self, distr, x):
-        pass
+        y = self.sample(distr)
+        self.assume(x == y)
 
     @classmethod
     def infer(cls, model, data):
@@ -166,7 +167,7 @@ class EnumerationSampling():
             sampler.init_next_path()
         probs = utils.normalize(logits)
         values, probs = utils.shrink(values, probs)
-        return support(values, [log(p) for p in probs])
+        return support(values, [log(p) if p != 0 else -float('inf') for p in probs])
 
 if __name__ == "__main__":
     from funny_bernoulli import funny_bernoulli
