@@ -1,20 +1,21 @@
-from distribution import bernoulli, uniform
+from distribution import binomial, uniform
 from test_inference import *
 
-def coin(prob, data):
-    z = prob.sample(uniform(0., 1.))
-    for elem in data:
-        prob.observe(bernoulli(z), elem)
-    return z
+def laplace(prob, data):
+    p = prob.sample(uniform(0., 1.))
+    """g = prob.sample(binomial(p, 493472)
+    prob.assume(g = 241945)"""
+    prob.observe(binomial(p, 493472), 241945)
+    return p
 
 if __name__ == '__main__':
-    model = coin
-    data = [0, 1, 1, 0, 0, 0, 0, 0, 0, 0]
-    name = "Funny Bernoulli"
+    model = laplace
+    data = None
+    name = "Laplace"
     plot_with_support = True
     plot_style = 'line'
 
-    #Tourne indéfiniement
+    #Tourne beaucoup trop longtemps
     #rejsamp_test(model, data, name, plot_with_support, plot_style)
     
     #Fonctionne
