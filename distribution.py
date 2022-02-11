@@ -158,10 +158,14 @@ def binomial(p, n):
     logpdf  = lambda x: sp.binom.logpmf(x, n, p)
     mean    = lambda: sp.binom.mean(n, p)
     var     = lambda: sp.binom.var(n, p)
-    support_values = list(range(n+1))
-    support_probs = [comb(n, k) for k in support_values]
-    support_logits = [log(x) for x in support_probs]
-    support = Support(support_values, support_logits, support_probs)
+    #If n is too big, it takes too much time to compute all comb(n,k)
+    if n < 500:
+        support_values = list(range(n+1))
+        support_probs = [comb(n, k) for k in support_values]
+        support_logits = [log(x) for x in support_probs]
+        support = Support(support_values, support_logits, support_probs)
+    else:
+        support = None
     return Distrib(sample, logpdf, mean, var, support)
 
 def dirac(v):
