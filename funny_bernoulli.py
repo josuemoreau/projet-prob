@@ -1,6 +1,5 @@
 from distribution import bernoulli
-from inference import RejectionSampling, ImportanceSampling, EnumerationSampling
-
+from test_inference import *
 
 def funny_bernoulli(prob, _x):
     a = prob.sample(bernoulli(0.5))
@@ -9,27 +8,12 @@ def funny_bernoulli(prob, _x):
     prob.assume(a == 1 or b == 1)
     return a + b + c
 
-
 if __name__ == '__main__':
-    print("-- Funny Bernoulli, Basic Rejection Sampling --")
-    rs = RejectionSampling(funny_bernoulli, None)
-    dist = rs.infer()
-    supp = dist.get_support(shrink=True)
-    for i in range(len(supp.values)):
-        print(f"{supp.values[i]} {supp.probs[i]}")
-    dist.plot()
-
-    print("-- Funny Bernoulli, Basic Importance Sampling --")
-    impsamp = ImportanceSampling(funny_bernoulli, None)
-    dist = impsamp.infer()
-    supp = dist.get_support(shrink=True)
-    for i in range(len(supp.values)):
-        print(f"{supp.values[i]} {supp.probs[i]}")
-    dist.plot()
-
-    print("-- Funny Bernoulli, Enumeration Sampling --")
-    dist = EnumerationSampling.infer(funny_bernoulli, None)
-    supp = dist.get_support(shrink=True)
-    for i in range(len(supp.values)):
-        print(f"{supp.values[i]} {supp.probs[i]}")
-    dist.plot()
+    foo = funny_bernoulli
+    data = None
+    name = "Funny Bernoulli"
+    plot_with_support = True
+    plot_style = 'bar'
+    rejsamp_test(foo, data, name, plot_with_support, plot_style)
+    impsamp_test(foo, data, name, plot_with_support, plot_style)
+    enumsamp_test(foo, data, name, plot_with_support, plot_style)
