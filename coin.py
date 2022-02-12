@@ -21,6 +21,8 @@ if __name__ == '__main__':
     plot_with_support = True
     plot_style = 'line'
 
+    metropolis_hastings_test(model, data, name, plot_with_support, plot_style)
+
     ## Version continue
 
     #Tourne indéfiniement
