@@ -1,8 +1,9 @@
-from typing import Callable, TypeVar, Generic, List
+from typing import Callable, TypeVar, Generic, List, Any
 from typing_extensions import Protocol
 from distribution import Distrib, support, uniform_support
 import utils
-from math import log
+from math import log, exp
+from random import randint, uniform
 
 # Rejection Sampling
 #
@@ -169,7 +170,124 @@ class EnumerationSampling():
         values, probs = utils.shrink(values, probs)
         return support(values, [log(p) if p != 0 else -float('inf') for p in probs])
 
+
+class MetropolisHastings(Generic[A, B]):
+
+    class RandomVariable():
+        def __init__(self, name, val):
+            self.name = name
+            self.val = val
+
+    class Prob(object):
+        _id: int
+        _scores: List[float]
+        _weights: List[float]
+        _sampleResults: List[Any]
+        _i: int
+        _len: int
+        _varId: int
+        _reuseI: int
+
+        def __init__(self, id: int, scores: List[float]):
+            self._id = id
+            self._scores = scores
+            self._i = 0
+            self._reuseI = 0
+            self._len = 0
+            self._sampleResults = []
+            self._weights = []
+
+        def factor(self, s: float):
+            self._scores[self._id] += s
+
+        def assume(self, p: bool):
+            self.factor(0. if p else -float('inf'))
+
+        def observe(self, d: Distrib[A], x: A):
+            self.factor(d.logpdf(x))
+
+        def sample(self, d: Distrib[A]):
+            if self._i < self._len:
+                v = self._sampleResults[self._i]
+                self._i += 1
+            else:
+                v = d.draw()
+                self._sampleResults.append(v)
+                self._weights.append(d.logpdf(v))
+                self._i += 1
+                self._len += 1
+            return v
+
+        def go_back_to_step(self, i, new_id):
+            self._sampleResults = self._sampleResults[:i]
+            self._weights = self._weights[:i]
+            self._reuseI = i
+            self._i = 0
+            self._len = i
+            self._id = new_id
+
+        def pick_random_step(self):
+            assert(self._len >= 1)
+            return randint(0, self._len - 1)
+
+        def nbSamples(self):
+            return self._len
+
+        def computeScore(self):
+            s = 0.
+            for i in range(self._reuseI):
+                s += self._weights[i]
+            # on a maintenant :
+            # s : commme des log des poids des variables sur lesquelles on
+            #     a appelé sample
+            # self._scores[self._id] : somme des log des poids des variables
+            #     observées (= score dans importance sampling)
+            # self._len : le nombre de variables de sample
+            return exp(s + self._scores[self._id]) / self._len
+
+    class Model(Generic[C], Protocol):
+        def __call__(self, prob, data):
+            # type : (C,  A) -> B
+            pass
+
+    _model: Model[Prob]
+    _data: A
+
+    def __init__(self, model: Callable[[Prob, A], B], data: A):
+        # self._prob = self.Prob()
+        self._model = model
+        self._data = data
+
+    def infer(self, n=1000):
+        scores = [0.] * n
+        values = []
+        prob = self.Prob(0, scores)
+        values.append(self._model(prob, self._data))
+        lastScore = prob.computeScore()
+        for i in range(1, n):
+            # on choisit aléatoirement un sample qui a été effectué par le
+            # modèle
+            step = prob.pick_random_step()
+            # on exécute à nouveau le modèle depuis ce point
+            prob.go_back_to_step(step, i)
+            v = self._model(prob, self._data)
+            score = prob.computeScore()
+            if score >= lastScore:
+                values.append(v)
+            else:
+                a = uniform(0, 1)
+                if a < score / lastScore:
+                    values.append(v)
+                else:
+                    values.append(values[i - 1])
+        assert(len(values) == len(scores))
+        return support(values, scores)
+
+
 if __name__ == "__main__":
     from funny_bernoulli import funny_bernoulli
     d = EnumerationSampling.infer(funny_bernoulli, None)
+    d.plot()
+    x = MetropolisHastings(funny_bernoulli, None)
+    d = x.infer()
     d.plot()
