@@ -16,6 +16,7 @@ C = TypeVar('C', covariant=True)
 class Reject(Exception):
     pass
 
+
 class UndefinedSupport(Exception):
     pass
 
@@ -43,7 +44,6 @@ class RejectionSampling(Generic[A, B]):
     _data: A
 
     def __init__(self, model: Callable[[Prob, A], B], data: A):
-        # self._prob = self.Prob()
         self._model = model
         self._data = data
 
@@ -90,7 +90,6 @@ class ImportanceSampling(Generic[A, B]):
     _data: A
 
     def __init__(self, model: Callable[[Prob, A], B], data: A):
-        # self._prob = self.Prob()
         self._model = model
         self._data = data
 
@@ -110,21 +109,21 @@ class EnumerationSampling():
         self.has_ended = False
 
     def init_next_path(self):
-        #Reinitialisation des valeurs.
+        # Reinitialisation des valeurs.
         self.sample_idx = -1
         self.curr_logit = 0
-        #Calcul de la prochaine trajectoire.
+        # Calcul de la prochaine trajectoire.
         n = len(self.path) - 1
         for i in range(n, -1, -1):
             idx, choices, _ = self.path[i]
-            #On effectue le prochain choix
+            # On effectue le prochain choix
             if idx + 1 < len(choices):
                 self.path[i][0] = idx + 1
                 return
-            #Si on a fait tous les choix possibles, on revient en arrière.
+            # Si on a fait tous les choix possibles, on revient en arrière.
             else:
                 self.path.pop(i)
-        #Si la prochaine trajectoire est nulle, on a fini.
+        # Si la prochaine trajectoire est nulle, on a fini.
         if len(self.path) == 0:
             self.has_ended = True
 
@@ -134,21 +133,21 @@ class EnumerationSampling():
     def sample(self, distr):
         self.sample_idx += 1
         if self.sample_idx >= len(self.path):
-            #On est sûr dans ce cas que sample_idx == len(path)
+            # On est sûr dans ce cas que sample_idx == len(path)
             if distr._support is None:
-                raise UndefinedSupport("The support is undefined or infinite. "\
-                "Exhaustive Sampling can't be used in that case.")
+                raise UndefinedSupport("The support is undefined or infinite. "
+                        + "Exhaustive Sampling can't be used in that case.")
             support = distr.get_support(shrink=True)
             self.path.append([0, support.values, support.logits])
 
         idx, choices, logits = self.path[self.sample_idx]
-        self.curr_logit += logits[idx] #Mult petits probs ou Add grands logits ?
+        self.curr_logit += logits[idx]  # Mult petits probs ou Add grands logits ?
         return choices[idx]
-    
+
     def assume(self, p: bool):
         if not p:
             raise Reject
-    
+
     def observe(self, distr, x):
         y = self.sample(distr)
         self.assume(x == y)
@@ -230,9 +229,6 @@ class MetropolisHastings(Generic[A, B]):
             assert(self._len >= 1)
             return randint(0, self._len - 1)
 
-        def nbSamples(self):
-            return self._len
-
         def computeScore(self):
             s = 0.
             for i in range(self._reuseI):
@@ -254,7 +250,6 @@ class MetropolisHastings(Generic[A, B]):
     _data: A
 
     def __init__(self, model: Callable[[Prob, A], B], data: A):
-        # self._prob = self.Prob()
         self._model = model
         self._data = data
 
@@ -273,8 +268,12 @@ class MetropolisHastings(Generic[A, B]):
             v = self._model(prob, self._data)
             score = prob.computeScore()
             if score >= lastScore:
+                # si le score de la nouvelle exécution est meilleur, on la
+                # garde
                 values.append(v)
             else:
+                # sinon, on la garde avec une probabilité
+                # score actuel / score de l'exécution précédente
                 a = uniform(0, 1)
                 if a < score / lastScore:
                     values.append(v)
