@@ -20,6 +20,7 @@ if __name__ == '__main__':
     
     #Fonctionne
     impsamp_test(model, data, name, plot_with_support, plot_style)
+    metropolis_hastings_test(model, data, name, plot_with_support, plot_style)
     
     #N'est pas applicable car uniforme n'a pas de support fini.
     #enumsamp_test(model, data, name, plot_with_support, plot_style)
