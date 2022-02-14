@@ -20,7 +20,7 @@ if __name__ == '__main__':
     name = "Coin"
     plot_with_support = True
     plot_style = 'line'
-    remove_first_iterations = 300
+    remove_first_iterations = 0
 
     metropolis_hastings_test(model, data, name,
                              remove_first_iterations,
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     ## Version discrète
     name = "Discrete coin"
     model = discrete_coin
-    plot_style = 'bar'
+    plot_style = 'line'
     #rejsamp_test(model, data, name, plot_with_support, plot_style)
     impsamp_test(model, data, name, plot_with_support, plot_style)
     enumsamp_test(model, data, name, plot_with_support, plot_style)

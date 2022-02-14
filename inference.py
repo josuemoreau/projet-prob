@@ -4,6 +4,7 @@ from distribution import Distrib, support, uniform_support
 import utils
 from math import log, exp
 from random import randint, uniform
+from numpy import log as nplog
 
 # Rejection Sampling
 #
@@ -212,6 +213,7 @@ class MetropolisHastings(Generic[A, B]):
             else:
                 v = d.draw()
                 self._sampleResults.append(v)
+                # print('logpdf :', d.logpdf(v))
                 self._weights.append(d.logpdf(v))
                 self._i += 1
                 self._len += 1
@@ -227,12 +229,15 @@ class MetropolisHastings(Generic[A, B]):
 
         def pick_random_step(self):
             assert(self._len >= 1)
-            return randint(0, self._len - 1)
+            d = uniform_support(list(range(self._len)))
+            return d.draw()
+            # return randint(0, self._len - 1)
 
         def computeScore(self):
             s = 0.
             for i in range(self._reuseI):
                 s += self._weights[i]
+            # print(s)
             # on a maintenant :
             # s : commme des log des poids des variables sur lesquelles on
             #     a appelé sample
@@ -256,9 +261,12 @@ class MetropolisHastings(Generic[A, B]):
     def infer(self, n=1000, remove_first_iterations=0):
         scores = [0.] * n
         values = []
+        probs = []
         prob = self.Prob(0, scores)
-        values.append(self._model(prob, self._data))
+        lastValue = self._model(prob, self._data)
         lastScore = prob.computeScore()
+        values.append(lastValue)
+        probs.append(nplog(lastScore))
         for i in range(1, n):
             # on choisit aléatoirement un sample qui a été effectué par le
             # modèle
@@ -267,24 +275,26 @@ class MetropolisHastings(Generic[A, B]):
             prob.go_back_to_step(step, i)
             v = self._model(prob, self._data)
             score = prob.computeScore()
-            if score >= lastScore:
-                # si le score de la nouvelle exécution est meilleur, on la
-                # garde
-                values.append(v)
+            # if score >= lastScore:
+            #     # si le score de la nouvelle exécution est meilleur, on la
+            #     # garde
+            #     values.append(v)
+            #     lastScore = score
+            # else:
+            # sinon, on la garde avec une probabilité
+            # score actuel / score de l'exécution précédente
+            a = uniform(0, 1)
+            if lastScore == 0 or a < min(1, score / lastScore):
+                lastValue = v
                 lastScore = score
-            else:
-                # sinon, on la garde avec une probabilité
-                # score actuel / score de l'exécution précédente
-                a = uniform(0, 1)
-                if a < score / lastScore:
-                    values.append(v)
-                    lastScore = score
-                else:
-                    values.append(values[i - 1])
+            values.append(lastValue)
+            probs.append(nplog(lastScore))
         assert(len(values) == len(scores))
         print("remove :", remove_first_iterations)
+        print("values :", len(values[remove_first_iterations:]))
+        print("scores :", len(scores[remove_first_iterations:]))
         return support(values[remove_first_iterations:],
-                       scores[remove_first_iterations:])
+                       probs[remove_first_iterations:])
 
 
 if __name__ == "__main__":
