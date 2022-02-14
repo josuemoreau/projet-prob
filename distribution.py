@@ -148,7 +148,9 @@ def binomial(p: float, n: int) -> Distrib[int]:
     #If n is too big, it takes too much time to compute all comb(n,k)
     if n < 500:
         support_values = list(range(n+1))
-        support_probs = [comb(n, k) for k in support_values]
+        all_combs = [comb(n, k) for k in support_values]
+        sum_combs = sum(all_combs)
+        support_probs = [elem / sum_combs for elem in all_combs]
         support_logits = [log(x) for x in support_probs]
         support = Support(support_values, support_logits, support_probs)
     else:
