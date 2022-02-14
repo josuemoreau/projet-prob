@@ -253,7 +253,7 @@ class MetropolisHastings(Generic[A, B]):
         self._model = model
         self._data = data
 
-    def infer(self, n=1000):
+    def infer(self, n=1000, remove_first_iterations=0):
         scores = [0.] * n
         values = []
         prob = self.Prob(0, scores)
@@ -271,16 +271,20 @@ class MetropolisHastings(Generic[A, B]):
                 # si le score de la nouvelle exécution est meilleur, on la
                 # garde
                 values.append(v)
+                lastScore = score
             else:
                 # sinon, on la garde avec une probabilité
                 # score actuel / score de l'exécution précédente
                 a = uniform(0, 1)
                 if a < score / lastScore:
                     values.append(v)
+                    lastScore = score
                 else:
                     values.append(values[i - 1])
         assert(len(values) == len(scores))
-        return support(values, scores)
+        print("remove :", remove_first_iterations)
+        return support(values[remove_first_iterations:],
+                       scores[remove_first_iterations:])
 
 
 if __name__ == "__main__":

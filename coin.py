@@ -20,8 +20,11 @@ if __name__ == '__main__':
     name = "Coin"
     plot_with_support = True
     plot_style = 'line'
+    remove_first_iterations = 300
 
-    metropolis_hastings_test(model, data, name, plot_with_support, plot_style)
+    metropolis_hastings_test(model, data, name,
+                             remove_first_iterations,
+                             plot_with_support, plot_style)
 
     ## Version continue
 
