@@ -1,4 +1,4 @@
-from typing import List, Tuple, Callable, TypeVar, Optional, Generic
+from typing import List, Tuple, Callable, TypeVar, Optional, Generic, Any
 from typing_extensions import Protocol
 import scipy.stats as sp
 import math
@@ -84,6 +84,22 @@ class Distrib(Generic[_A]):
             self._support = Support(values,
                                     [math.log(x) if x != 0. else -float('inf')
                                      for x in probs], probs)
+
+    def split_list(self) -> List[Support[Any]]:
+        supp = self.get_support()
+        assert (supp is not None)
+        assert (len(supp.values) > 0)
+        assert (isinstance(supp.values[0], List))
+        assert (all(isinstance(v, List)  # vérification pour le typage
+                    and len(v) == len(supp.values[0])
+                    for v in supp.values))
+        if all(len(v) == [] for v in supp.values):  # type: ignore
+            return []
+        res: List[Support[Any]] = []
+        for i in range(len(supp.values[0])):
+            values = [v[i] for v in supp.values]  # type: ignore
+            res.append(support(values, supp.logits))  # type: ignore
+        return res
 
     def plot(self, plot_with_support: bool = False,
              plot_style: str = 'scatter',
