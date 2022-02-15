@@ -50,3 +50,18 @@ def mh_test(foo, data, name, shrink=False,
     # for i in range(len(supp.values)):
     #     print(f"{supp.values[i]} {supp.probs[i]}")
     dist.plot(plot_with_support=plot_with_support, plot_style=plot_style)
+
+
+def test(model, data, name, method=ImportanceSampling,
+         print_support=False,
+         shrink=False, plot_with_support=False, plot_style='scatter'):
+    print("-- {}, {} --".format(name, method.name()))
+    mh = method(model, data)
+    dist = mh.infer()
+    if shrink:
+        dist.shrink_support()
+    if print_support:
+        supp = dist.get_support()
+        for i in range(len(supp.values)):
+            print(f"{supp.values[i]} {supp.probs[i]}")
+    dist.plot(plot_with_support=plot_with_support, plot_style=plot_style)

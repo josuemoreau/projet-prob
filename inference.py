@@ -48,6 +48,10 @@ class RejectionSampling(Generic[A, B]):
         self._model = model
         self._data = data
 
+    @staticmethod
+    def name():
+        return "Rejection Sampling"
+
     def infer(self, n=1000):
         prob = self.Prob()
         values = []
@@ -93,6 +97,10 @@ class ImportanceSampling(Generic[A, B]):
     def __init__(self, model: Callable[[Prob, A], B], data: A):
         self._model = model
         self._data = data
+
+    @staticmethod
+    def name():
+        return "Importance Sampling"
 
     def infer(self, n=1000):
         scores = [0.] * n
@@ -261,6 +269,10 @@ class MetropolisHastings(Generic[A, B]):
     def __init__(self, model: Callable[[Prob, A], B], data: A):
         self._model = model
         self._data = data
+
+    @staticmethod
+    def name():
+        return "Metropolis Hastings"
 
     def infer(self, n=1000):
         scores = [0.] * n

@@ -1,5 +1,6 @@
+from inference import ImportanceSampling, MetropolisHastings
 from distribution import binomial, uniform
-from test_inference import *
+from test_inference import test
 
 def laplace(prob, data):
     p = prob.sample(uniform(0., 1.))
@@ -21,8 +22,8 @@ if __name__ == '__main__':
     #rejsamp_test(model, data, name, plot_with_support, plot_style)
 
     #Fonctionne
-    impsamp_test(model, data, name, **options)
-    mh_test(model, data, name, **options)
+    test(model, data, name, method=ImportanceSampling, **options)
+    test(model, data, name, method=MetropolisHastings, **options)
 
     #N'est pas applicable car uniforme n'a pas de support fini.
     #enumsamp_test(model, data, name, plot_with_support, plot_style)

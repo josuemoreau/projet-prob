@@ -1,3 +1,4 @@
+from inference import ImportanceSampling, MetropolisHastings
 from distribution import bernoulli, uniform, uniform_support
 from test_inference import *
 from numpy import linspace
@@ -24,8 +25,8 @@ if __name__ == '__main__':
         'plot_style': 'line'
     }
 
-    impsamp_test(model, data, name, **options)
-    mh_test(model, data, name, **options)
+    test(model, data, name, method=ImportanceSampling, **options)
+    test(model, data, name, method=MetropolisHastings, **options)
 
     ## Version continue
 
@@ -48,5 +49,5 @@ if __name__ == '__main__':
     options['plot_style'] = 'bar'
     #rejsamp_test(model, data, name, plot_with_support, plot_style)
 
-    impsamp_test(model, data, name, **options)
+    test(model, data, name, method=ImportanceSampling, **options)
     enumsamp_test(model, data, name, **options)

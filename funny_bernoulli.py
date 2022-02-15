@@ -1,5 +1,6 @@
+from inference import RejectionSampling, ImportanceSampling, MetropolisHastings, EnumerationSampling
 from distribution import bernoulli
-from test_inference import *
+from test_inference import test, enumsamp_test
 
 def funny_bernoulli(prob, _x):
     a = prob.sample(bernoulli(0.5))
@@ -17,7 +18,7 @@ if __name__ == '__main__':
         'plot_with_support': True,
         'plot_style': 'bar'
     }
-    rejsamp_test(foo, data, name, **options)
-    impsamp_test(foo, data, name, **options)
+    test(foo, data, name, method=RejectionSampling, **options)
+    test(foo, data, name, method=ImportanceSampling, **options)
     enumsamp_test(foo, data, name, **options)
-    mh_test(foo, data, name, **options)
+    test(foo, data, name, method=MetropolisHastings, **options)
