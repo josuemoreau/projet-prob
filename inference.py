@@ -11,8 +11,7 @@ from random import uniform as randuniform
 
 A = TypeVar('A')
 B = TypeVar('B')
-C = TypeVar('C', covariant=True)
-_T = TypeVar('_T')
+_C = TypeVar('_C')
 
 
 class Reject(Exception):
@@ -23,8 +22,8 @@ class UndefinedSupport(Exception):
     pass
 
 
-class CallableProtocol(Protocol[_T]):
-    __call__: _T
+class CallableProtocol(Protocol[_C]):
+    __call__: _C
 
 
 class RejectionSampling(Generic[A, B]):
