@@ -12,17 +12,17 @@ if __name__ == '__main__':
     model = laplace
     data = None
     name = "Laplace"
-    shrink = False
-    plot_with_support = True
-    plot_style = 'line'
-    remove_first_iterations = 0
-
+    options = {
+        'shrink': False,
+        'plot_with_support': True,
+        'plot_style': 'line'
+    }
     #Tourne beaucoup trop longtemps
     #rejsamp_test(model, data, name, plot_with_support, plot_style)
 
     #Fonctionne
-    impsamp_test(model, data, name, shrink, plot_with_support, plot_style)
-    mh_test(model, data, name, shrink, plot_with_support, plot_style)
+    impsamp_test(model, data, name, **options)
+    mh_test(model, data, name, **options)
 
     #N'est pas applicable car uniforme n'a pas de support fini.
     #enumsamp_test(model, data, name, plot_with_support, plot_style)

@@ -12,10 +12,12 @@ if __name__ == '__main__':
     foo = funny_bernoulli
     data = None
     name = "Funny Bernoulli"
-    shrink = True
-    plot_with_support = True
-    plot_style = 'bar'
-    rejsamp_test(foo, data, name, shrink, plot_with_support, plot_style)
-    impsamp_test(foo, data, name, shrink, plot_with_support, plot_style)
-    enumsamp_test(foo, data, name, shrink, plot_with_support, plot_style)
-    mh_test(foo, data, name, True, plot_with_support, plot_style)
+    options = {
+        'shrink': True,
+        'plot_with_support': True,
+        'plot_style': 'bar'
+    }
+    rejsamp_test(foo, data, name, **options)
+    impsamp_test(foo, data, name, **options)
+    enumsamp_test(foo, data, name, **options)
+    mh_test(foo, data, name, **options)

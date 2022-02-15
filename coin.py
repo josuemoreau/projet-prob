@@ -18,13 +18,14 @@ if __name__ == '__main__':
     model = coin
     data = [0, 1, 1, 0, 0, 0, 0, 0, 0, 0]
     name = "Coin"
-    shrink = False
-    plot_with_support = True
-    plot_style = 'line'
-    remove_first_iterations = 0
+    options = {
+        'shrink': False,
+        'plot_with_support': True,
+        'plot_style': 'line'
+    }
 
-    impsamp_test(model, data, name, shrink, plot_with_support, plot_style)
-    mh_test(model, data, name, shrink, plot_with_support, plot_style)
+    impsamp_test(model, data, name, **options)
+    mh_test(model, data, name, **options)
 
     ## Version continue
 
@@ -44,8 +45,8 @@ if __name__ == '__main__':
     ## Version discrète
     name = "Discrete coin"
     model = discrete_coin
-    plot_style = 'bar'
+    options['plot_style'] = 'bar'
     #rejsamp_test(model, data, name, plot_with_support, plot_style)
 
-    impsamp_test(model, data, name, shrink, plot_with_support, plot_style)
-    enumsamp_test(model, data, name, shrink, plot_with_support, plot_style)
+    impsamp_test(model, data, name, **options)
+    enumsamp_test(model, data, name, **options)
