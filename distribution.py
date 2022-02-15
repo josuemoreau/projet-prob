@@ -86,21 +86,14 @@ class Distrib(Generic[_A]):
     def logpdf(self, x: _A) -> float:
         return self._logpdf(x)
 
-    # def mean_generic(self, transform) -> float:
-    #     if self._mean is not None:
-    #         return self.mean()
-    #     elif self._support is not None:
-    #         values = scpspec.logsumexp
-    #     else:
-    #         pass
-
-    def shrink_support(self):
-        values = self._support.values
-        probs = self._support.probs
-        values, probs = utils.shrink(values, probs)
-        self._support = Support(values,
-                                [math.log(x) if x != 0. else -float('inf')
-                                 for x in probs], probs)
+    def shrink_support(self) -> None:
+        if self._support is not None:
+            values = self._support.values
+            probs = self._support.probs
+            values, probs = utils.shrink(values, probs)
+            self._support = Support(values,
+                                    [math.log(x) if x != 0. else -float('inf')
+                                     for x in probs], probs)
 
     def plot(self, plot_with_support: bool = False,
              plot_style: str = 'scatter',
