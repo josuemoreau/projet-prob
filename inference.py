@@ -181,11 +181,6 @@ class EnumerationSampling():
 
 class MetropolisHastings(Generic[A, B]):
 
-    class RandomVariable():
-        def __init__(self, name, val):
-            self.name = name
-            self.val = val
-
     class Prob(object):
         _id: int
         _scores: List[float]
