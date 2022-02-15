@@ -5,13 +5,24 @@ import utils
 from math import log, exp
 from random import randint
 from random import uniform as randuniform
-
-# Rejection Sampling
-#
+from abc import ABC, abstractmethod
 
 A = TypeVar('A')
 B = TypeVar('B')
 _C = TypeVar('_C')
+
+
+class Prob(ABC):
+
+    @abstractmethod
+    def assume(self, p: bool) -> None:
+        pass
+
+    def observe(self, d: Distrib[A], x: A) -> None:
+        pass
+
+    def sample(self, d: Distrib[A]) -> A:
+        pass
 
 
 class Reject(Exception):
@@ -28,7 +39,7 @@ class CallableProtocol(Protocol[_C]):
 
 class RejectionSampling(Generic[A, B]):
 
-    class Prob(object):
+    class RejSampProb(Prob):
         def assume(self, p: bool) -> None:
             if not p:
                 raise Reject
@@ -52,7 +63,7 @@ class RejectionSampling(Generic[A, B]):
         return "Rejection Sampling"
 
     def infer(self, n: int = 1000) -> Distrib[B]:
-        prob = self.Prob()
+        prob = self.RejSampProb()
         values: List[B] = []
         while len(values) < n:
             try:
@@ -65,7 +76,7 @@ class RejectionSampling(Generic[A, B]):
 
 class ImportanceSampling(Generic[A, B]):
 
-    class Prob(object):
+    class ImpSampProb(Prob):
         _id: int
         _scores: List[float]
 
@@ -98,7 +109,7 @@ class ImportanceSampling(Generic[A, B]):
 
     def infer(self, n: int = 1000) -> Distrib[B]:
         scores = [0.] * n
-        values = [self._model(self.Prob(i, scores), self._data)
+        values = [self._model(self.ImpSampProb(i, scores), self._data)
                   for i in range(n)]
         return support(values, scores)
 
@@ -175,7 +186,7 @@ class EnumerationSampling():
 
 class MetropolisHastings(Generic[A, B]):
 
-    class Prob(object):
+    class MHProb(Prob):
         _id: int
         _scores: List[float]
         _weights: List[float]
@@ -260,7 +271,7 @@ class MetropolisHastings(Generic[A, B]):
         scores = [0.] * n
         values = []
         probs = []
-        prob = self.Prob(0, scores)
+        prob = self.MHProb(0, scores)
         lastValue = self._model(prob, self._data)
         lastScore = prob.computeScore()
         values.append(lastValue)
