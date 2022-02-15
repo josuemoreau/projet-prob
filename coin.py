@@ -18,33 +18,36 @@ if __name__ == '__main__':
     model = coin
     data = [0, 1, 1, 0, 0, 0, 0, 0, 0, 0]
     name = "Coin"
+    shrink = False
     plot_with_support = True
     plot_style = 'line'
     remove_first_iterations = 0
 
+    impsamp_test(model, data, name, shrink, plot_with_support, plot_style)
     metropolis_hastings_test(model, data, name,
-                             remove_first_iterations,
+                             remove_first_iterations, shrink,
                              plot_with_support, plot_style)
 
     ## Version continue
 
     #Tourne indéfiniement
     #rejsamp_test(model, data, name, plot_with_support, plot_style)
-    
+
     #Fonctionne
     #impsamp_test(model, data, name, plot_with_support, plot_style)
-    
+
     #N'est pas applicable car uniforme n'a pas de support fini.
     #enumsamp_test(model, data, name, plot_with_support, plot_style)
 
     #Tourne indéfiniement
     #rejsamp_test(model, data, name, plot_with_support, plot_style)
-    
+
 
     ## Version discrète
     name = "Discrete coin"
     model = discrete_coin
-    plot_style = 'line'
+    plot_style = 'bar'
     #rejsamp_test(model, data, name, plot_with_support, plot_style)
-    impsamp_test(model, data, name, plot_with_support, plot_style)
-    enumsamp_test(model, data, name, plot_with_support, plot_style)
+
+    impsamp_test(model, data, name, shrink, plot_with_support, plot_style)
+    enumsamp_test(model, data, name, shrink, plot_with_support, plot_style)

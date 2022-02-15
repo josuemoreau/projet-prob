@@ -12,9 +12,11 @@ if __name__ == '__main__':
     foo = funny_bernoulli
     data = None
     name = "Funny Bernoulli"
+    shrink = True
     plot_with_support = True
     plot_style = 'bar'
-    rejsamp_test(foo, data, name, plot_with_support, plot_style)
-    impsamp_test(foo, data, name, plot_with_support, plot_style)
-    enumsamp_test(foo, data, name, plot_with_support, plot_style)
-    metropolis_hastings_test(foo, data, name, 0, plot_with_support, plot_style)
+    rejsamp_test(foo, data, name, shrink, plot_with_support, plot_style)
+    impsamp_test(foo, data, name, shrink, plot_with_support, plot_style)
+    enumsamp_test(foo, data, name, shrink, plot_with_support, plot_style)
+    metropolis_hastings_test(foo, data, name, 0, True,
+                             plot_with_support, plot_style)

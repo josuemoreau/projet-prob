@@ -3,8 +3,8 @@ from typing_extensions import Protocol
 from distribution import Distrib, support, uniform_support
 import utils
 from math import log, exp
-from random import randint, uniform
-from numpy import log as nplog
+from random import randint
+from random import uniform as randuniform
 
 # Rejection Sampling
 #
@@ -183,6 +183,7 @@ class MetropolisHastings(Generic[A, B]):
         _scores: List[float]
         _weights: List[float]
         _sampleResults: List[Any]
+        _observed: int
         _i: int
         _len: int
         _varId: int
@@ -196,6 +197,7 @@ class MetropolisHastings(Generic[A, B]):
             self._len = 0
             self._sampleResults = []
             self._weights = []
+            self._observed = 0
 
         def factor(self, s: float):
             self._scores[self._id] += s
@@ -204,6 +206,7 @@ class MetropolisHastings(Generic[A, B]):
             self.factor(0. if p else -float('inf'))
 
         def observe(self, d: Distrib[A], x: A):
+            self._observed += 1
             self.factor(d.logpdf(x))
 
         def sample(self, d: Distrib[A]):
@@ -226,12 +229,13 @@ class MetropolisHastings(Generic[A, B]):
             self._i = 0
             self._len = i
             self._id = new_id
+            self._observed = 0
 
         def pick_random_step(self):
             assert(self._len >= 1)
-            d = uniform_support(list(range(self._len)))
-            return d.draw()
-            # return randint(0, self._len - 1)
+            # d = uniform_support(list(range(self._len)))
+            # return d.draw()
+            return randint(0, self._len - 1)
 
         def computeScore(self):
             s = 0.
@@ -266,13 +270,15 @@ class MetropolisHastings(Generic[A, B]):
         lastValue = self._model(prob, self._data)
         lastScore = prob.computeScore()
         values.append(lastValue)
-        probs.append(nplog(lastScore))
+        probs.append(log(lastScore) if lastScore > 0 else -float('inf'))
         for i in range(1, n):
             # on choisit aléatoirement un sample qui a été effectué par le
             # modèle
             step = prob.pick_random_step()
+            # print(f"Last model has {prob._len} samples and {prob._observed} observed values")
             # on exécute à nouveau le modèle depuis ce point
             prob.go_back_to_step(step, i)
+            # print(f"Going back to step {step}")
             v = self._model(prob, self._data)
             score = prob.computeScore()
             # if score >= lastScore:
@@ -283,16 +289,19 @@ class MetropolisHastings(Generic[A, B]):
             # else:
             # sinon, on la garde avec une probabilité
             # score actuel / score de l'exécution précédente
-            a = uniform(0, 1)
-            if lastScore == 0 or a < min(1, score / lastScore):
+            x = randuniform(0, 1)
+            # print(f"Current value : {v}")
+            # print(f"Current score : {score}")
+            # print(f"Last score : {lastScore}")
+            if lastScore == 0 or x < min(1, score / lastScore):
                 lastValue = v
                 lastScore = score
             values.append(lastValue)
-            probs.append(nplog(lastScore))
+            probs.append(log(lastScore) if lastScore > 0 else -float('inf'))
         assert(len(values) == len(scores))
-        print("remove :", remove_first_iterations)
-        print("values :", len(values[remove_first_iterations:]))
-        print("scores :", len(scores[remove_first_iterations:]))
+        # print("remove :", remove_first_iterations)
+        # print("values :", len(values[remove_first_iterations:]))
+        # print("scores :", len(scores[remove_first_iterations:]))
         return support(values[remove_first_iterations:],
                        probs[remove_first_iterations:])
 

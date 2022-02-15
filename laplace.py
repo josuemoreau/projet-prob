@@ -12,18 +12,19 @@ if __name__ == '__main__':
     model = laplace
     data = None
     name = "Laplace"
+    shrink = False
     plot_with_support = True
     plot_style = 'line'
     remove_first_iterations = 0
 
     #Tourne beaucoup trop longtemps
     #rejsamp_test(model, data, name, plot_with_support, plot_style)
-    
+
     #Fonctionne
-    impsamp_test(model, data, name, plot_with_support, plot_style)
+    impsamp_test(model, data, name, shrink, plot_with_support, plot_style)
     metropolis_hastings_test(model, data, name,
-                             remove_first_iterations,
+                             remove_first_iterations, shrink,
                              plot_with_support, plot_style)
-    
+
     #N'est pas applicable car uniforme n'a pas de support fini.
     #enumsamp_test(model, data, name, plot_with_support, plot_style)

@@ -94,13 +94,21 @@ class Distrib(Generic[_A]):
     #     else:
     #         pass
 
+    def shrink_support(self):
+        values = self._support.values
+        probs = self._support.probs
+        values, probs = utils.shrink(values, probs)
+        self._support = Support(values,
+                                [math.log(x) if x != 0. else -float('inf')
+                                 for x in probs], probs)
+
     def plot(self, plot_with_support: bool = False,
              plot_style: str = 'scatter') -> None:
         if plot_with_support:
             if self._support is None:
                 print("Pas de support à plot")
                 return
-            supp = self.get_support(shrink=True)
+            supp = self.get_support()
             assert(isinstance(supp, Support))
             if plot_style == 'bar':
                 plt.bar(supp.values, supp.probs, width=0.05)
