@@ -18,5 +18,4 @@ if __name__ == '__main__':
     rejsamp_test(foo, data, name, shrink, plot_with_support, plot_style)
     impsamp_test(foo, data, name, shrink, plot_with_support, plot_style)
     enumsamp_test(foo, data, name, shrink, plot_with_support, plot_style)
-    metropolis_hastings_test(foo, data, name, 0, True,
-                             plot_with_support, plot_style)
+    mh_test(foo, data, name, True, plot_with_support, plot_style)

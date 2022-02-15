@@ -262,7 +262,7 @@ class MetropolisHastings(Generic[A, B]):
         self._model = model
         self._data = data
 
-    def infer(self, n=1000, remove_first_iterations=0):
+    def infer(self, n=1000):
         scores = [0.] * n
         values = []
         probs = []
@@ -302,8 +302,7 @@ class MetropolisHastings(Generic[A, B]):
         # print("remove :", remove_first_iterations)
         # print("values :", len(values[remove_first_iterations:]))
         # print("scores :", len(scores[remove_first_iterations:]))
-        return support(values[remove_first_iterations:],
-                       probs[remove_first_iterations:])
+        return support(values, probs)
 
 
 if __name__ == "__main__":

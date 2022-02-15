@@ -24,9 +24,7 @@ if __name__ == '__main__':
     remove_first_iterations = 0
 
     impsamp_test(model, data, name, shrink, plot_with_support, plot_style)
-    metropolis_hastings_test(model, data, name,
-                             remove_first_iterations, shrink,
-                             plot_with_support, plot_style)
+    mh_test(model, data, name, shrink, plot_with_support, plot_style)
 
     ## Version continue
 
