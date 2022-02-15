@@ -12,6 +12,7 @@ from random import uniform as randuniform
 A = TypeVar('A')
 B = TypeVar('B')
 C = TypeVar('C', covariant=True)
+_T = TypeVar('_T')
 
 
 class Reject(Exception):
@@ -22,26 +23,25 @@ class UndefinedSupport(Exception):
     pass
 
 
+class CallableProtocol(Protocol[_T]):
+    __call__: _T
+
+
 class RejectionSampling(Generic[A, B]):
 
     class Prob(object):
-        def assume(self, p: bool):
+        def assume(self, p: bool) -> None:
             if not p:
                 raise Reject
 
-        def observe(self, d: Distrib[A], x: A):
+        def observe(self, d: Distrib[A], x: A) -> None:
             y = d.draw()
             self.assume(x == y)
 
-        def sample(self, d: Distrib[A]):
+        def sample(self, d: Distrib[A]) -> A:
             return d.draw()
 
-    class Model(Generic[C], Protocol):
-        def __call__(self, prob, data):
-            # type : (C,  A) -> B
-            pass
-
-    _model: Model[Prob]
+    _model: CallableProtocol[Callable[[Prob, A], B]]
     _data: A
 
     def __init__(self, model: Callable[[Prob, A], B], data: A):
@@ -49,12 +49,12 @@ class RejectionSampling(Generic[A, B]):
         self._data = data
 
     @staticmethod
-    def name():
+    def name() -> str:
         return "Rejection Sampling"
 
-    def infer(self, n=1000):
+    def infer(self, n: int = 1000) -> Distrib[B]:
         prob = self.Prob()
-        values = []
+        values: List[B] = []
         while len(values) < n:
             try:
                 value = self._model(prob, self._data)
@@ -74,24 +74,19 @@ class ImportanceSampling(Generic[A, B]):
             self._id = id
             self._scores = scores
 
-        def factor(self, s: float):
+        def factor(self, s: float) -> None:
             self._scores[self._id] += s
 
-        def assume(self, p: bool):
+        def assume(self, p: bool) -> None:
             self.factor(0. if p else -float('inf'))
 
-        def observe(self, d: Distrib[A], x: A):
+        def observe(self, d: Distrib[A], x: A) -> None:
             self.factor(d.logpdf(x))
 
-        def sample(self, d: Distrib[A]):
+        def sample(self, d: Distrib[A]) -> A:
             return d.draw()
 
-    class Model(Generic[C], Protocol):
-        def __call__(self, prob, data):
-            # type : (C,  A) -> B
-            pass
-
-    _model: Model[Prob]
+    _model: CallableProtocol[Callable[[Prob, A], B]]
     _data: A
 
     def __init__(self, model: Callable[[Prob, A], B], data: A):
@@ -99,10 +94,10 @@ class ImportanceSampling(Generic[A, B]):
         self._data = data
 
     @staticmethod
-    def name():
+    def name() -> str:
         return "Importance Sampling"
 
-    def infer(self, n=1000):
+    def infer(self, n: int = 1000) -> Distrib[B]:
         scores = [0.] * n
         values = [self._model(self.Prob(i, scores), self._data)
                   for i in range(n)]
@@ -202,17 +197,17 @@ class MetropolisHastings(Generic[A, B]):
             self._weights = []
             self._observed = 0
 
-        def factor(self, s: float):
+        def factor(self, s: float) -> None:
             self._scores[self._id] += s
 
-        def assume(self, p: bool):
+        def assume(self, p: bool) -> None:
             self.factor(0. if p else -float('inf'))
 
-        def observe(self, d: Distrib[A], x: A):
+        def observe(self, d: Distrib[A], x: A) -> None:
             self._observed += 1
             self.factor(d.logpdf(x))
 
-        def sample(self, d: Distrib[A]):
+        def sample(self, d: Distrib[A]) -> A:
             if self._i < self._len:
                 v = self._sampleResults[self._i]
                 self._i += 1
@@ -223,9 +218,9 @@ class MetropolisHastings(Generic[A, B]):
                 self._weights.append(d.logpdf(v))
                 self._i += 1
                 self._len += 1
-            return v
+            return v  # type: ignore
 
-        def go_back_to_step(self, i, new_id):
+        def go_back_to_step(self, i: int, new_id: int) -> None:
             self._sampleResults = self._sampleResults[:i]
             self._weights = self._weights[:i]
             self._reuseI = i
@@ -234,13 +229,11 @@ class MetropolisHastings(Generic[A, B]):
             self._id = new_id
             self._observed = 0
 
-        def pick_random_step(self):
+        def pick_random_step(self) -> int:
             assert(self._len >= 1)
-            # d = uniform_support(list(range(self._len)))
-            # return d.draw()
             return randint(0, self._len - 1)
 
-        def computeScore(self):
+        def computeScore(self) -> float:
             s = 0.
             for i in range(self._reuseI):
                 s += self._weights[i]
@@ -253,12 +246,7 @@ class MetropolisHastings(Generic[A, B]):
             # self._len : le nombre de variables de sample
             return exp(s + self._scores[self._id]) / self._len
 
-    class Model(Generic[C], Protocol):
-        def __call__(self, prob, data):
-            # type : (C,  A) -> B
-            pass
-
-    _model: Model[Prob]
+    _model: CallableProtocol[Callable[[Prob, A], B]]
     _data: A
 
     def __init__(self, model: Callable[[Prob, A], B], data: A):
@@ -266,10 +254,10 @@ class MetropolisHastings(Generic[A, B]):
         self._data = data
 
     @staticmethod
-    def name():
+    def name() -> str:
         return "Metropolis Hastings"
 
-    def infer(self, n=1000):
+    def infer(self, n: int = 1000) -> Distrib[B]:
         scores = [0.] * n
         values = []
         probs = []
