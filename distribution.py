@@ -42,8 +42,8 @@ class Support(Generic[_A]):
 class Distrib(Generic[_A]):
     _sample: CallableProtocol[Callable[[], _A]]
     _logpdf: CallableProtocol[Callable[[_A], float]]
-    _mean: Optional[Callable[[], _A]]
-    _var: Optional[Callable[[], float]]
+    mean: Optional[Callable[[], _A]]
+    var: Optional[Callable[[], float]]
     _samples: Optional[List[_A]]
     _support: Optional[Support[_A]]
     _n: int
@@ -56,8 +56,8 @@ class Distrib(Generic[_A]):
         self._n = n
         self._sample = sample
         self._logpdf = logpdf
-        self._mean = mean
-        self._var = var
+        self.mean = mean
+        self.var = var
         self._samples = None
         self._support = support
 
