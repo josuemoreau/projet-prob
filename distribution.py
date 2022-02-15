@@ -5,7 +5,6 @@ import math
 from math import log, comb, inf
 import utils
 import matplotlib.pyplot as plt
-from abc import ABC
 
 _A = TypeVar('_A')
 _C = TypeVar('_C')
@@ -13,15 +12,6 @@ _C = TypeVar('_C')
 
 class CallableProtocol(Protocol[_C]):
     __call__: _C
-
-
-class Multiplicable(ABC):
-    @classmethod
-    def __subclasshook__(cls, C):  # type: ignore
-        if cls is Multiplicable:
-            if any("__mul__" in B.__dict__ for B in C.__mro__):
-                return True
-        return NotImplemented
 
 
 class Support(Generic[_A]):
@@ -174,14 +164,18 @@ def support(values: List[_A], logits: List[float]) -> Distrib[_A]:
     sp_distrib = sp.rv_discrete(values=(range(len(values)), probs))
     sample  = lambda: values[sp_distrib.rvs()]
     logpdf  = lambda x: utils.findprob(values, probs, x)
-    if isinstance(values, Multiplicable):
+    try:
+        # if values support product with a floatting number
         _mean = sum(values[i] * probs[i] for i in range(len(values)))  # type: ignore
         _var = sum((values[i] - _mean)**2 for i in range(len(values))) / len(probs)  # type: ignore
-    else:
-        raise NotImplemented
+    except TypeError:
+        # otherwise, we cannot compute mean and variance
+        _mean = None
+        _var = None
     mean    = lambda: _mean
     var     = lambda: _var
     support = Support(values, logits, probs)
+    # return Distrib(sample, logpdf, support)  # type: ignore
     return Distrib(sample, logpdf, mean, var, support)  # type: ignore
 
 
