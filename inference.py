@@ -315,12 +315,3 @@ class MetropolisHastings(Generic[A, B]):
         # print("values :", len(values[remove_first_iterations:]))
         # print("scores :", len(scores[remove_first_iterations:]))
         return support(values, probs)
-
-
-if __name__ == "__main__":
-    from funny_bernoulli import funny_bernoulli
-    d = EnumerationSampling.infer(funny_bernoulli, None)
-    d.plot()
-    x = MetropolisHastings(funny_bernoulli, None)
-    d = x.infer()
-    d.plot()
