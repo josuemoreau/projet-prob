@@ -18,10 +18,28 @@ class Prob(ABC):
     def assume(self, p: bool) -> None:
         pass
 
+    @abstractmethod
     def observe(self, d: Distrib[A], x: A) -> None:
         pass
 
+    @abstractmethod
     def sample(self, d: Distrib[A]) -> A:
+        pass
+
+
+class InferenceMethod(ABC, Generic[A, B]):
+
+    @abstractmethod
+    def __init__(self, model: Callable[[Prob, A], B], data: A):
+        pass
+
+    @abstractmethod
+    def infer(self, n: int = 1000) -> Distrib[B]:
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def name() -> str:
         pass
 
 
@@ -37,7 +55,7 @@ class CallableProtocol(Protocol[_C]):
     __call__: _C
 
 
-class RejectionSampling(Generic[A, B]):
+class RejectionSampling(InferenceMethod[A, B]):
 
     class RejSampProb(Prob):
         def assume(self, p: bool) -> None:
@@ -74,7 +92,7 @@ class RejectionSampling(Generic[A, B]):
         return uniform_support(values)
 
 
-class ImportanceSampling(Generic[A, B]):
+class ImportanceSampling(InferenceMethod[A, B]):
 
     class ImpSampProb(Prob):
         _id: int
@@ -184,7 +202,7 @@ class EnumerationSampling():
         return support(values, [log(p) if p != 0 else -float('inf') for p in probs])
 
 
-class MetropolisHastings(Generic[A, B]):
+class MetropolisHastings(InferenceMethod[A, B]):
 
     class MHProb(Prob):
         _id: int
