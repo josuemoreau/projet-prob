@@ -36,7 +36,8 @@ def enumsamp_test(foo, data, name, shrink=False,
     supp = dist.get_support()
     for i in range(len(supp.values)):
         print(f"{supp.values[i]} {supp.probs[i]}")
-    dist.plot(plot_with_support=plot_with_support, plot_style=plot_style)
+    dist.plot(plot_with_support=plot_with_support, plot_style=plot_style,
+              model_name=name, method_name='Enumeration Sampling')
 
 
 def mh_test(foo, data, name, shrink=False,
@@ -64,4 +65,5 @@ def test(model, data, name, method=ImportanceSampling,
         supp = dist.get_support()
         for i in range(len(supp.values)):
             print(f"{supp.values[i]} {supp.probs[i]}")
-    dist.plot(plot_with_support=plot_with_support, plot_style=plot_style)
+    dist.plot(plot_with_support=plot_with_support, plot_style=plot_style,
+              model_name=name, method_name=method.name())

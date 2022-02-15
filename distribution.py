@@ -103,7 +103,8 @@ class Distrib(Generic[_A]):
                                  for x in probs], probs)
 
     def plot(self, plot_with_support: bool = False,
-             plot_style: str = 'scatter') -> None:
+             plot_style: str = 'scatter',
+             model_name: str = "", method_name: str = "") -> None:
         if plot_with_support:
             if self._support is None:
                 print("Pas de support à plot")
@@ -126,7 +127,7 @@ class Distrib(Generic[_A]):
                 return
         else:
             plt.hist(self.get_samples(), 100)
-        plt.title('Distribution')
+        plt.title(f"{model_name} - {method_name}")
         plt.grid(True)
         plt.show()
 
