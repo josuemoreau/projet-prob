@@ -1,6 +1,7 @@
 from typing import Callable, TypeVar, Type
 from inference import Prob, InferenceMethod, RejectionSampling, \
-    ImportanceSampling, EnumerationSampling, MetropolisHastings
+    ImportanceSampling, EnumerationSampling, MetropolisHastings, \
+    HamiltonianMonteCarlo
 
 A = TypeVar('A')
 B = TypeVar('B')
@@ -74,14 +75,21 @@ def mh_test(model: Callable[[Prob, A], B], data: A, name: str,
 
 def test(model: Callable[[Prob, A], B], data: A, name: str,
          method: Type[InferenceMethod[A, B]] = ImportanceSampling,
+         n: int = 1000,
          print_support: bool = False,
          shrink: bool = False,
          plot_with_support: bool = False,
-         plot_style: str = 'scatter') \
+         plot_style: str = 'scatter',
+         eps: float = 0.01, L: int = 20) \
          -> None:
     print("-- {}, {} --".format(name, method.name()))
     mh = method(model, data)
-    dist = mh.infer()
+    if method == HamiltonianMonteCarlo:
+        dist = mh.infer(n=n, eps=eps, L=L)  # type: ignore
+    elif method == EnumerationSampling:
+        dist = mh.infer()
+    else:
+        dist = mh.infer(n=n)
     if shrink:
         dist.shrink_support()
     if print_support:
