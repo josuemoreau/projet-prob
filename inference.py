@@ -229,7 +229,6 @@ class MetropolisHastings(InferenceMethod[A, B]):
         _scores: List[float]
         _weights: List[float]
         _sampleResults: List[Any]
-        _observed: int
         _i: int
         _len: int
         _varId: int
@@ -243,7 +242,6 @@ class MetropolisHastings(InferenceMethod[A, B]):
             self._len = 0
             self._sampleResults = []
             self._weights = []
-            self._observed = 0
 
         def factor(self, s: float) -> None:
             self._scores[self._id] += s
@@ -252,7 +250,6 @@ class MetropolisHastings(InferenceMethod[A, B]):
             self.factor(0. if p else -float('inf'))
 
         def observe(self, d: Distrib[A], x: A) -> None:
-            self._observed += 1
             self.factor(d.logpdf(x))
 
         def sample(self, d: Distrib[A]) -> A:
@@ -275,7 +272,6 @@ class MetropolisHastings(InferenceMethod[A, B]):
             self._i = 0
             self._len = i
             self._id = new_id
-            self._observed = 0
 
         def pick_random_step(self) -> int:
             assert(self._len >= 1)
