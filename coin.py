@@ -10,7 +10,7 @@ def coin(prob, data):
     return z
 
 def discrete_coin(prob, data):
-    z = prob.sample(uniform_support(linspace(0, 1, 100)))
+    z = prob.sample(uniform_support(list(linspace(0, 1, 100))))
     for elem in data:
         prob.observe(bernoulli(z), elem)
     return z
