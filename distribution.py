@@ -110,8 +110,8 @@ class Distrib(Generic[_A]):
                 return
             supp = self.get_support()
             assert(isinstance(supp, Support))
-            if plot_style == 'bar':
-                plt.bar(supp.values, supp.probs, width=0.05)
+            if plot_style == 'stem':
+                plt.stem(supp.values, supp.probs)
             elif plot_style == 'scatter':
                 plt.scatter(supp.values, supp.probs)
                 plot_y_size = max(supp.probs)
@@ -120,9 +120,14 @@ class Distrib(Generic[_A]):
                 plt.plot(*zip(*sorted(zip(supp.values, supp.probs))))
                 plot_y_size = max(supp.probs)
                 plt.ylim((-plot_y_size*1/20, plot_y_size*21/20))
+            elif plot_style in ['scatter+line', 'line+scatter'] :
+                plt.scatter(supp.values, supp.probs)
+                plt.plot(*zip(*sorted(zip(supp.values, supp.probs))))
+                plot_y_size = max(supp.probs)
+                plt.ylim((-plot_y_size*1/20, plot_y_size*21/20))
             else:
                 print("L'argument plot_style est invalide. Il doit être "\
-                      "'bar', 'scatter', ou 'line'")
+                      "'stem', 'scatter', 'line', ou 'line+scatter'")
                 return
         else:
             plt.hist(self.get_samples(), 100)

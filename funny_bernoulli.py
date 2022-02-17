@@ -16,7 +16,7 @@ if __name__ == '__main__':
     options = {
         'shrink': True,
         'plot_with_support': True,
-        'plot_style': 'bar'
+        'plot_style': 'stem'
     }
     test(foo, data, name, method=RejectionSampling, **options)
     test(foo, data, name, method=ImportanceSampling, **options)

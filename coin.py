@@ -46,7 +46,7 @@ if __name__ == '__main__':
     ## Version discrète
     name = "Discrete coin"
     model = discrete_coin
-    options['plot_style'] = 'bar'
+    options['plot_style'] = 'stem'
     #rejsamp_test(model, data, name, plot_with_support, plot_style)
 
     test(model, data, name, method=ImportanceSampling, **options)
