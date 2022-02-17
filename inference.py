@@ -270,7 +270,7 @@ class MetropolisHastings(InferenceMethod[A, B]):
 
         def go_back_to_step(self, i: int, new_id: int) -> None:
             self._sampleResults = self._sampleResults[:i]
-            self._weights = self._weights[:i]
+            self._weights = [0.] * i  # self._weights[:i]
             self._reuseI = i
             self._i = 0
             self._len = i
