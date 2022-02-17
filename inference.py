@@ -303,12 +303,12 @@ class MetropolisHastings(InferenceMethod[A, B]):
     def infer(self, n: int = 1000) -> Distrib[B]:
         scores = [0.] * n
         values = []
-        probs = []
+        logits = []
         prob = self.MHProb(0, scores)
         lastValue = self._model(prob, self._data)
         lastScore = prob.computeScore()
         values.append(lastValue)
-        probs.append(log(lastScore) if lastScore > 0 else -float('inf'))
+        logits.append(log(lastScore) if lastScore > 0 else -float('inf'))
         for i in range(1, n):
             # on choisit aléatoirement un sample qui a été effectué par le
             # modèle
@@ -335,9 +335,9 @@ class MetropolisHastings(InferenceMethod[A, B]):
                 lastValue = v
                 lastScore = score
             values.append(lastValue)
-            probs.append(log(lastScore) if lastScore > 0 else -float('inf'))
+            logits.append(log(lastScore) if lastScore > 0 else -float('inf'))
         assert(len(values) == len(scores))
         # print("remove :", remove_first_iterations)
         # print("values :", len(values[remove_first_iterations:]))
         # print("scores :", len(scores[remove_first_iterations:]))
-        return support(values, probs)
+        return support(values, logits)
