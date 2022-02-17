@@ -20,5 +20,5 @@ if __name__ == '__main__':
     }
     test(foo, data, name, method=RejectionSampling, **options)
     test(foo, data, name, method=ImportanceSampling, **options)
-    enumsamp_test(foo, data, name, **options)
+    test(foo, data, name, method=EnumerationSampling, **options)
     test(foo, data, name, method=MetropolisHastings, **options)

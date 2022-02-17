@@ -1,4 +1,4 @@
-from inference import ImportanceSampling, MetropolisHastings
+from inference import ImportanceSampling, MetropolisHastings, EnumerationSampling
 from distribution import bernoulli, uniform, uniform_support
 from test_inference import test, enumsamp_test
 from numpy import linspace
@@ -10,7 +10,7 @@ def coin(prob, data):
     return z
 
 def discrete_coin(prob, data):
-    z = prob.sample(uniform_support(linspace(0, 1, 20)))
+    z = prob.sample(uniform_support(linspace(0, 1, 100)))
     for elem in data:
         prob.observe(bernoulli(z), elem)
     return z
@@ -50,4 +50,4 @@ if __name__ == '__main__':
     #rejsamp_test(model, data, name, plot_with_support, plot_style)
 
     test(model, data, name, method=ImportanceSampling, **options)
-    enumsamp_test(model, data, name, **options)
+    test(model, data, name, method=EnumerationSampling, **options)

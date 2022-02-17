@@ -19,11 +19,11 @@ if __name__ == '__main__':
         'plot_style': 'line'
     }
     #Tourne beaucoup trop longtemps
-    #rejsamp_test(model, data, name, plot_with_support, plot_style)
+    #test(model, data, name, method=RejectionSampling, **options)
 
     #Fonctionne
     test(model, data, name, method=ImportanceSampling, **options)
     test(model, data, name, method=MetropolisHastings, **options)
 
     #N'est pas applicable car uniforme n'a pas de support fini.
-    #enumsamp_test(model, data, name, plot_with_support, plot_style)
+    #test(model, data, name, method=EnumerationSampling, **options)

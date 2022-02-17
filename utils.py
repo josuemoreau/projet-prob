@@ -16,8 +16,8 @@ def shrink(values: List[Any], probs: List[float]) \
 
 def normalize(scores: List[float]) -> List[float]:
     norm = exp(spspec.logsumexp(scores))
-    if norm < 1e-10:
-        print("Scores are too small to give a valid distribution.")
+    '''if norm < 1e-10:
+        print("Scores are too small to give a valid distribution.")'''
     return [exp(elem) / norm for elem in scores]
 
 
