@@ -1,4 +1,4 @@
-from typing import Callable, TypeVar, Generic, List, Any
+from typing import Callable, TypeVar, Generic, List, Any, NamedTuple
 from typing_extensions import Protocol
 from distribution import Distrib, support, uniform_support
 import utils
@@ -98,8 +98,8 @@ class ImportanceSampling(InferenceMethod[A, B]):
         _id: int
         _scores: List[float]
 
-        def __init__(self, id: int, scores: List[float]):
-            self._id = id
+        def __init__(self, idx: int, scores: List[float]):
+            self._id = idx
             self._scores = scores
 
         def factor(self, s: float) -> None:
@@ -132,71 +132,91 @@ class ImportanceSampling(InferenceMethod[A, B]):
         return support(values, scores)
 
 
-class EnumerationSampling():
+_SampleState = NamedTuple('_SampleState', [('idx', int), 
+    ('choices', List[A]), ('logits', List[float])])
 
-    def __init__(self):
-        self.sample_idx = -1
-        self.curr_logit = 0
-        self.path = []
-        self.has_ended = False
+class EnumerationSampling(InferenceMethod[A, B]):
 
-    def init_next_path(self):
-        # Reinitialisation des valeurs.
-        self.sample_idx = -1
-        self.curr_logit = 0
-        # Calcul de la prochaine trajectoire.
-        n = len(self.path) - 1
-        for i in range(n, -1, -1):
-            idx, choices, _ = self.path[i]
-            # On effectue le prochain choix
-            if idx + 1 < len(choices):
-                self.path[i][0] = idx + 1
-                return
-            # Si on a fait tous les choix possibles, on revient en arrière.
-            else:
-                self.path.pop(i)
-        # Si la prochaine trajectoire est nulle, on a fini.
-        if len(self.path) == 0:
-            self.has_ended = True
+    class EnumSampProb(Prob):
+        _state_idx: int
+        _score: float
+        _path: List[_SampleState]
+        _has_ended: bool
 
-    def get_logit(self):
-        return self.curr_logit
+        def __init__(self) -> None:
+            self._state_idx = -1
+            self._score = 0
+            self._path = []
+            self._has_ended = False
 
-    def sample(self, distr):
-        self.sample_idx += 1
-        if self.sample_idx >= len(self.path):
-            # On est sûr dans ce cas que sample_idx == len(path)
-            if distr._support is None:
-                raise UndefinedSupport("The support is undefined or infinite. "
-                        + "Exhaustive Sampling can't be used in that case.")
-            support = distr.get_support(shrink=True)
-            self.path.append([0, support.values, support.logits])
+        def init_next_path(self) -> None:
+            # Reinitialisation des valeurs.
+            self._state_idx = -1
+            self._score = 0
+            # Calcul de la prochaine trajectoire.
+            n = len(self._path) - 1
+            for i in range(n, -1, -1):
+                idx, choices, logits = self._path[i]
+                # On effectue le prochain choix
+                if idx + 1 < len(choices):
+                    self._path[i] = _SampleState(idx=idx + 1,
+                    choices=choices, logits=logits)
+                    return
+                # Si on a fait tous les choix possibles, on revient en arrière.
+                else:
+                    self._path.pop() #i enlevé !!!!
+            # Si la prochaine trajectoire est nulle, on a fini.
+            if len(self._path) == 0:
+                self._has_ended = True
 
-        idx, choices, logits = self.path[self.sample_idx]
-        self.curr_logit += logits[idx]  # Mult petits probs ou Add grands logits ?
-        return choices[idx]
+        def assume(self, p: bool) -> None:
+            if not p:
+                raise Reject
 
-    def assume(self, p: bool):
-        if not p:
-            raise Reject
+        def observe(self, d: Distrib[A], x:A) -> None:
+            y = self.sample(d)
+            self.assume(x == y)
 
-    def observe(self, distr, x):
-        y = self.sample(distr)
-        self.assume(x == y)
+        def sample(self, d: Distrib[A]) -> A:
+            self._state_idx += 1
+            if self._state_idx >= len(self._path):
+                # On est sûr dans ce cas que sample_idx == len(path)
+                if d._support is None:
+                    raise UndefinedSupport("The support is undefined or infinite. "\
+                            "Exhaustive Sampling can't be used in that case.")
+                support = d.get_support(shrink=True)
+                assert(support is not None)
+                self._path.append(_SampleState(idx=0, choices=support.values,
+                logits=support.logits))
 
-    @classmethod
-    def infer(cls, model, data):
-        sampler = cls()
+            idx, choices, logits = self._path[self._state_idx]
+            self._score += logits[idx]  # Mult petits probs ou Add grands logits ?
+            return choices[idx]
+
+
+    _model: CallableProtocol[Callable[[Prob, A], B]]
+    _data: A
+
+    def __init__(self, model: Callable[[Prob, A], B], data: A):
+        self._model = model
+        self._data = data
+
+    @staticmethod
+    def name() -> str:
+        return "Enumeration Sampling"
+
+    def infer(self, _:int = 0) -> Distrib[B]:
+        prob = self.EnumSampProb()
         values = []
         logits = []
-        while not sampler.has_ended:
+        while not prob._has_ended:
             try:
-                value = model(sampler, data)
+                value = self._model(prob, self._data)
                 values.append(value)
-                logits.append(sampler.get_logit())
+                logits.append(prob._score)
             except Reject:
                 pass
-            sampler.init_next_path()
+            prob.init_next_path()
         probs = utils.normalize(logits)
         values, probs = utils.shrink(values, probs)
         return support(values, [log(p) if p != 0 else -float('inf') for p in probs])
@@ -215,8 +235,8 @@ class MetropolisHastings(InferenceMethod[A, B]):
         _varId: int
         _reuseI: int
 
-        def __init__(self, id: int, scores: List[float]):
-            self._id = id
+        def __init__(self, idx: int, scores: List[float]):
+            self._id = idx
             self._scores = scores
             self._i = 0
             self._reuseI = 0
