@@ -231,7 +231,6 @@ class MetropolisHastings(InferenceMethod[A, B]):
         _sampleResults: List[Any]
         _i: int
         _len: int
-        _varId: int
         _reuseI: int
 
         def __init__(self, idx: int, scores: List[float]):
