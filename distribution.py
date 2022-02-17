@@ -223,15 +223,6 @@ def gaussian(mu: float, sigma: float) -> Distrib[float]:
     return Distrib(sample, logpdf, mean, var)
 
 
-def normal(mean: float, stddev: float) -> Distrib[float]:
-    assert(0. < stddev)
-    sample  = lambda: sp.norm.rvs(loc=mean, scale=stddev)
-    logpdf  = lambda x: sp.norm.logpdf(x, loc=mean, scale=stddev)
-    mean_   = lambda: sp.norm.mean(loc=mean, scale=stddev)
-    var     = lambda: sp.norm.var(loc=mean, scale=stddev)
-    return Distrib(sample, logpdf, mean_, var)
-
-
 def uniform(a: float, b: float) -> Distrib[float]:
     assert(a <= b)
     #scipy.stats.uniform(loc=0, scale=1) tire selon une loi uniforme
