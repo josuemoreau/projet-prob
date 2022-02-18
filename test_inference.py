@@ -86,8 +86,6 @@ def test(model: Callable[[Prob, A], B], data: A, name: str,
     mh = method(model, data)
     if method == HamiltonianMonteCarlo:
         dist = mh.infer(n=n, eps=eps, L=L)  # type: ignore
-    elif method == EnumerationSampling:
-        dist = mh.infer()
     else:
         dist = mh.infer(n=n)
     if shrink:

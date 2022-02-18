@@ -208,7 +208,7 @@ class EnumerationSampling(InferenceMethod[A, B]):
     def name() -> str:
         return "Enumeration Sampling"
 
-    def infer(self, _:int = 0) -> Distrib[B]:
+    def infer(self, n:int = 0) -> Distrib[B]:
         prob = self.EnumSampProb()
         values = []
         logits = []
