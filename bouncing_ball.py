@@ -1,49 +1,46 @@
-from inference import ImportanceSampling, MetropolisHastings, EnumerationSampling
-from distribution import bernoulli, support, uniform, uniform_support
+from inference import ImportanceSampling, MetropolisHastings
+from distribution import uniform
 from test_inference import test
 import numpy as np
 from collections import namedtuple
 import matplotlib.pyplot as plt
 from math import sqrt, cos, sin, pi, log
-from copy import copy, deepcopy
 
 #On suppose ci dessous que col_vec et ort_vec sont de norme 1.
 Obstacle = namedtuple('Obstacle', ['center', 'col_vec', 'width'])
 #Ma balle n'a pas de rayon. Inchallah !
-D = []
-T = []
-I = 0
 
 def bouncing_ball(prob, data):
-    global I, D
     obstacles = []
     to_return = []
-    for _ in range(2):
+
+    ball_pos, dt, ground, bucket, nb_platform, sample_uniform_range_x, sample_uniform_range_y, platform_width = data
+
+    for _ in range(nb_platform):
         angle = prob.sample(uniform(0, pi))
         obs_vec = np.array([cos(angle), sin(angle)])
-        center = np.array([prob.sample(uniform(0, 10)), prob.sample(uniform(0, 10))])
+        center = np.array([prob.sample(uniform(*sample_uniform_range_x)),\
+            prob.sample(uniform(*sample_uniform_range_y))])
         obs = Obstacle(center = center,\
             col_vec = obs_vec,
-            width = 4)
+            width = platform_width)
         obstacles.append(obs)
         to_return.extend([angle, center[0], center[1]])
     
-    ball_pos, dt, ground, bucket = data
+    
     inter, _ = deterministic_bouncing_ball(ball_pos, dt, ground, bucket, obstacles)
+    distance_to_bucket = calc_distance(inter, bucket)
+    prob.factor(-log(1 + distance_to_bucket))
+    return tuple(to_return)
+
+def calc_distance(inter, bucket):
     inter = inter[0]
     if inter is None:
         distance_to_bucket = float('inf')
     else:
         to_bucket = inter - bucket.center
         distance_to_bucket = max(0, sqrt(to_bucket @ to_bucket) - bucket.width / 2)
-    D.append(distance_to_bucket)
-    to_return.append(deepcopy(distance_to_bucket))
-    to_return.append(deepcopy(I))
-    I += 1
-    T.append(tuple(deepcopy(to_return)))
-    prob.factor(-log(1 + distance_to_bucket))
-    return tuple(to_return)
-
+    return distance_to_bucket
 
 def deterministic_bouncing_ball(ball_pos, dt, ground, bucket, obstacles):
     pt = np.array([ball_pos, np.array([0, 0])])
@@ -138,91 +135,44 @@ def normalize(vector):
 def ort_vector(vec):
     return np.array([-vec[1], vec[0]])
 
-def calctest(inter, bucket):
-    inter = inter[0]
-    if inter is None:
-        distance_to_bucket = float('inf')
-    else:
-        to_bucket = inter - bucket.center
-        distance_to_bucket = max(0, sqrt(to_bucket @ to_bucket) - bucket.width / 2)
-    return distance_to_bucket
-
-def resimulate(dist, data):
-    T2 = []
-    ball_pos, dt, ground, bucket = data
-    supp = dist._support
-    Dresim = [None]*100
-    for j, elem in enumerate(supp.values):
-        obstacles = []
-        to_return = []
-        for i in range(0, len(elem)-2, 3):
-            angle = elem[i]
-            obs_vec = np.array([cos(angle), sin(angle)])
-            center = np.array([elem[i+1], elem[i+2]])
-            obs = Obstacle(center = center,\
-                col_vec = obs_vec,
-                width = 4)
-            obstacles.append(obs)
-            to_return.extend([angle, center[0], center[1]])
-        inter, traj = deterministic_bouncing_ball(ball_pos, dt, ground, bucket, obstacles)
-        f = calctest(inter, bucket)
-        Dresim[elem[-1]] = f
-        to_return.append(f)
-        to_return.append(j)
-        T2.append(tuple(deepcopy(to_return)))
-    return Dresim, T2
-
 
 def plot_prob(dist, data):
-    ball_pos, dt, ground, bucket = data
+    ball_pos, dt, ground, bucket, nb_platform, sample_uniform_range_x, sample_uniform_range_y, platform_width = data
     supp = dist._support
-    best1 = supp.values[supp.probs.index(min(supp.probs))]
+    best = supp.values[supp.probs.index(max(supp.probs))]
     obstacles = []
-    for i in range(0, len(best1)-2, 3):
-        angle = best1[i]
+    for i in range(0, len(best), 3):
+        angle = best[i]
         obs_vec = np.array([cos(angle), sin(angle)])
-        center = np.array([best1[i+1], best1[i+2]])
+        center = np.array([best[i+1], best[i+2]])
         obs = Obstacle(center = center,\
             col_vec = obs_vec,
             width = 4)
         obstacles.append(obs)
-    inter1, traj = deterministic_bouncing_ball(ball_pos, dt, ground, bucket, obstacles)
-    best1v = calctest(inter1, bucket)
-    plot_traj(traj, ground, bucket, obstacles)
-
-    best2 = supp.values[supp.probs.index(max(supp.probs))]
-    obstacles = []
-    for i in range(0, len(best2)-2, 3):
-        angle = best2[i]
-        obs_vec = np.array([cos(angle), sin(angle)])
-        center = np.array([best2[i+1], best2[i+2]])
-        obs = Obstacle(center = center,\
-            col_vec = obs_vec,
-            width = 4)
-        obstacles.append(obs)
-    inter2, traj = deterministic_bouncing_ball(ball_pos, dt, ground, bucket, obstacles)
-    best2v = calctest(inter2, bucket)
-
-    if best1v < best2v:
-        print('b')
-
+    inter, traj = deterministic_bouncing_ball(ball_pos, dt, ground, bucket, obstacles)
+    distance = calc_distance(inter, bucket)
+    print("Meilleure distance : ", distance)
     plot_traj(traj, ground, bucket, obstacles)
 
 
 if __name__ == '__main__':
 
-    ball_pos = np.array([1, 10])
-    ground = Obstacle(center = np.array([9, 0]),\
+    ball_pos = np.array([0, 8])
+    ground = Obstacle(center = np.array([19, 0]),\
         col_vec= np.array([1, 0]),
         width=float('inf'))
     bucket = Obstacle(center = ground.center,\
         col_vec= ground.col_vec,
         width=0.5)
     dt = 0.01
+    sample_uniform_range_x = (0, bucket.center[0]+1)
+    sample_uniform_range_y = (0, ball_pos[1])
+    platform_width = 4
+    nb_platform = 3
 
-    method = ImportanceSampling
     model = bouncing_ball
-    data = [ball_pos, dt, ground, bucket]
+    data = [ball_pos, dt, ground, bucket, nb_platform, sample_uniform_range_x,\
+        sample_uniform_range_y, platform_width]
     name = "Bouncing Ball"
     options = {
         'shrink': False,
@@ -230,18 +180,17 @@ if __name__ == '__main__':
         'plot_style': 'line+scatter'
     }
     
+    method = ImportanceSampling
     print("-- Bouncing Ball, {} --".format(method.name()))
     mh = method(model, data)
-    dist = mh.infer(n=100)
-    
-    t = sorted(dist._support.values, key= lambda x: x[-1])
-    t1 = [elem[-2] for elem in t]
-    print('a')
-    '''Dresim = resimulate(dist, data)
-    print('c')'''
+    dist = mh.infer(n=1000)
     plot_prob(dist, data)
-
-    #test(model, data, name, method=MetropolisHastings, **options)
+    
+    method = MetropolisHastings
+    print("-- Bouncing Ball, {} --".format(method.name()))
+    mh = method(model, data)
+    dist = mh.infer(n=1000)
+    plot_prob(dist, data)
 
     
 
