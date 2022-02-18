@@ -11,6 +11,7 @@ from copy import copy, deepcopy
 Obstacle = namedtuple('Obstacle', ['center', 'col_vec', 'width'])
 #Ma balle n'a pas de rayon. Inchallah !
 D = []
+T = []
 I = 0
 
 def bouncing_ball(prob, data):
@@ -39,6 +40,7 @@ def bouncing_ball(prob, data):
     to_return.append(deepcopy(distance_to_bucket))
     to_return.append(deepcopy(I))
     I += 1
+    T.append(tuple(deepcopy(to_return)))
     prob.factor(-log(1 + distance_to_bucket))
     return tuple(to_return)
 
@@ -146,12 +148,14 @@ def calctest(inter, bucket):
     return distance_to_bucket
 
 def resimulate(dist, data):
+    T2 = []
     ball_pos, dt, ground, bucket = data
     supp = dist._support
     Dresim = [None]*100
-    for elem in supp.values:
+    for j, elem in enumerate(supp.values):
         obstacles = []
-        for i in range((len(elem)-2)//3):
+        to_return = []
+        for i in range(0, len(elem)-2, 3):
             angle = elem[i]
             obs_vec = np.array([cos(angle), sin(angle)])
             center = np.array([elem[i+1], elem[i+2]])
@@ -159,9 +163,14 @@ def resimulate(dist, data):
                 col_vec = obs_vec,
                 width = 4)
             obstacles.append(obs)
+            to_return.extend([angle, center[0], center[1]])
         inter, traj = deterministic_bouncing_ball(ball_pos, dt, ground, bucket, obstacles)
-        Dresim[elem[-1]] = calctest(inter, bucket)
-    return Dresim
+        f = calctest(inter, bucket)
+        Dresim[elem[-1]] = f
+        to_return.append(f)
+        to_return.append(j)
+        T2.append(tuple(deepcopy(to_return)))
+    return Dresim, T2
 
 
 def plot_prob(dist, data):
@@ -169,7 +178,7 @@ def plot_prob(dist, data):
     supp = dist._support
     best1 = supp.values[supp.probs.index(min(supp.probs))]
     obstacles = []
-    for i in range((len(best1)-2)//3):
+    for i in range(0, len(best1)-2, 3):
         angle = best1[i]
         obs_vec = np.array([cos(angle), sin(angle)])
         center = np.array([best1[i+1], best1[i+2]])
@@ -179,11 +188,11 @@ def plot_prob(dist, data):
         obstacles.append(obs)
     inter1, traj = deterministic_bouncing_ball(ball_pos, dt, ground, bucket, obstacles)
     best1v = calctest(inter1, bucket)
-
+    plot_traj(traj, ground, bucket, obstacles)
 
     best2 = supp.values[supp.probs.index(max(supp.probs))]
     obstacles = []
-    for i in range((len(best2)-2)//3):
+    for i in range(0, len(best2)-2, 3):
         angle = best2[i]
         obs_vec = np.array([cos(angle), sin(angle)])
         center = np.array([best2[i+1], best2[i+2]])
@@ -197,7 +206,7 @@ def plot_prob(dist, data):
     if best1v < best2v:
         print('b')
 
-    #plot_traj(traj, ground, bucket, obstacles)
+    plot_traj(traj, ground, bucket, obstacles)
 
 
 if __name__ == '__main__':
