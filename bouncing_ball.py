@@ -1,34 +1,70 @@
 from inference import ImportanceSampling, MetropolisHastings, EnumerationSampling
-from distribution import bernoulli, uniform, uniform_support
+from distribution import bernoulli, support, uniform, uniform_support
 from test_inference import test
 import numpy as np
 from collections import namedtuple
 import matplotlib.pyplot as plt
-from math import sqrt, cos, sin, pi
+from math import sqrt, cos, sin, pi, log
+from copy import copy, deepcopy
 
 #On suppose ci dessous que col_vec et ort_vec sont de norme 1.
-Obstacle = namedtuple('Obstacle', ['center', 'col_vec', 'ort_vec', 'width'])
+Obstacle = namedtuple('Obstacle', ['center', 'col_vec', 'width'])
 #Ma balle n'a pas de rayon. Inchallah !
-#Pas de frottements pour l'instant. possibilité de boucle infinie.
+D = []
+I = 0
 
-def bouncing_ball(ball_pos, ground, bucket, obstacles, dt):
+def bouncing_ball(prob, data):
+    global I, D
+    obstacles = []
+    to_return = []
+    for _ in range(2):
+        angle = prob.sample(uniform(0, pi))
+        obs_vec = np.array([cos(angle), sin(angle)])
+        center = np.array([prob.sample(uniform(0, 10)), prob.sample(uniform(0, 10))])
+        obs = Obstacle(center = center,\
+            col_vec = obs_vec,
+            width = 4)
+        obstacles.append(obs)
+        to_return.extend([angle, center[0], center[1]])
+    
+    ball_pos, dt, ground, bucket = data
+    inter, _ = deterministic_bouncing_ball(ball_pos, dt, ground, bucket, obstacles)
+    inter = inter[0]
+    if inter is None:
+        distance_to_bucket = float('inf')
+    else:
+        to_bucket = inter - bucket.center
+        distance_to_bucket = max(0, sqrt(to_bucket @ to_bucket) - bucket.width / 2)
+    D.append(distance_to_bucket)
+    to_return.append(deepcopy(distance_to_bucket))
+    to_return.append(deepcopy(I))
+    I += 1
+    prob.factor(-log(1 + distance_to_bucket))
+    return tuple(to_return)
+
+
+def deterministic_bouncing_ball(ball_pos, dt, ground, bucket, obstacles):
     pt = np.array([ball_pos, np.array([0, 0])])
     trajectory = [pt]
     ground_hit = False
+    t = 0
     while not ground_hit:
+        t += dt
         pt, ground_hit = step(pt, dt, ground, obstacles)
         trajectory.append(pt)
-    return intersect(trajectory[-2], trajectory[-1], bucket), trajectory
+        if t > 1000:
+            return None, trajectory
+    return trajectory[-1], trajectory
 
 def step(old_pt, dt, ground, obstacles):
     new_pt = move(old_pt, dt)
-    inter = intersect(old_pt, new_pt, ground)
-    if inter is not None:
-        return np.array([inter, np.array([0, 0])]), True
     for obs in obstacles:
         inter = intersect(old_pt, new_pt, obs)
         if inter is not None:
             new_pt = push(new_pt, obs)
+    inter = intersect(old_pt, new_pt, ground)
+    if inter is not None:
+        return np.array([inter, np.array([0, 0])]), True
     return new_pt, False
 
 def push(pt, obs):
@@ -52,12 +88,13 @@ def move(pt, dt):
 
 def intersect(old_pt, new_pt, obs) -> bool:
     #Traverse-t-on la droite qui porte l'obstacle ?
-    if ((old_pt[0] - obs.center) @ obs.ort_vec >= 0) ==\
-        ((new_pt[0] - obs.center) @ obs.ort_vec >= 0) :
+    obs_ort_vec = ort_vector(obs.col_vec)
+    if ((old_pt[0] - obs.center) @ obs_ort_vec >= 0) ==\
+        ((new_pt[0] - obs.center) @ obs_ort_vec >= 0) :
         return None
     #Si oui, le traverse-t-on au niveau de l'obstacle ?
     #On calcule le point d'intersection
-    V1 = obs.ort_vec
+    V1 = obs_ort_vec
     A1 = obs.center
     V2 = ort_vector(new_pt[0] - old_pt[0])
     A2 = old_pt[0]
@@ -77,7 +114,7 @@ def plot_traj(traj, ground, bucket, obstacles):
     bucket1 = bucket.center - bucket.col_vec * bucket.width / 2
     bucket2 = bucket.center + bucket.col_vec * bucket.width / 2
     plt.plot([bucket1[0], (bucket1[0] + bucket2[0]) / 2, bucket2[0], bucket1[0]],\
-        [bucket1[1], (bucket1[0] + bucket2[0]) / 2 - 1, bucket2[1], bucket1[1]],
+        [bucket1[1], (bucket1[1] + bucket2[1]) / 2 -1, bucket2[1], bucket1[1]],
         color='black')
     for obs in obstacles:
         obs1 = obs.center - obs.col_vec * obs.width / 2
@@ -90,9 +127,6 @@ def plot_traj(traj, ground, bucket, obstacles):
     plt.axis('scaled')
     plt.show()
 
-class NullVector(Exception):
-    pass
-
 def normalize(vector):
     norm = sqrt(vector @ vector)
     if norm == 0:
@@ -102,41 +136,125 @@ def normalize(vector):
 def ort_vector(vec):
     return np.array([-vec[1], vec[0]])
 
+def calctest(inter, bucket):
+    inter = inter[0]
+    if inter is None:
+        distance_to_bucket = float('inf')
+    else:
+        to_bucket = inter - bucket.center
+        distance_to_bucket = max(0, sqrt(to_bucket @ to_bucket) - bucket.width / 2)
+    return distance_to_bucket
+
+def resimulate(dist, data):
+    ball_pos, dt, ground, bucket = data
+    supp = dist._support
+    Dresim = [None]*100
+    for elem in supp.values:
+        obstacles = []
+        for i in range((len(elem)-2)//3):
+            angle = elem[i]
+            obs_vec = np.array([cos(angle), sin(angle)])
+            center = np.array([elem[i+1], elem[i+2]])
+            obs = Obstacle(center = center,\
+                col_vec = obs_vec,
+                width = 4)
+            obstacles.append(obs)
+        inter, traj = deterministic_bouncing_ball(ball_pos, dt, ground, bucket, obstacles)
+        Dresim[elem[-1]] = calctest(inter, bucket)
+    return Dresim
+
+
+def plot_prob(dist, data):
+    ball_pos, dt, ground, bucket = data
+    supp = dist._support
+    best1 = supp.values[supp.probs.index(min(supp.probs))]
+    obstacles = []
+    for i in range((len(best1)-2)//3):
+        angle = best1[i]
+        obs_vec = np.array([cos(angle), sin(angle)])
+        center = np.array([best1[i+1], best1[i+2]])
+        obs = Obstacle(center = center,\
+            col_vec = obs_vec,
+            width = 4)
+        obstacles.append(obs)
+    inter1, traj = deterministic_bouncing_ball(ball_pos, dt, ground, bucket, obstacles)
+    best1v = calctest(inter1, bucket)
+
+
+    best2 = supp.values[supp.probs.index(max(supp.probs))]
+    obstacles = []
+    for i in range((len(best2)-2)//3):
+        angle = best2[i]
+        obs_vec = np.array([cos(angle), sin(angle)])
+        center = np.array([best2[i+1], best2[i+2]])
+        obs = Obstacle(center = center,\
+            col_vec = obs_vec,
+            width = 4)
+        obstacles.append(obs)
+    inter2, traj = deterministic_bouncing_ball(ball_pos, dt, ground, bucket, obstacles)
+    best2v = calctest(inter2, bucket)
+
+    if best1v < best2v:
+        print('b')
+
+    #plot_traj(traj, ground, bucket, obstacles)
+
+
 if __name__ == '__main__':
-    '''ball_pos = np.array([0.5, 10])
-    ground = Obstacle(center = np.array([0, 0]),\
+
+    ball_pos = np.array([1, 10])
+    ground = Obstacle(center = np.array([9, 0]),\
         col_vec= np.array([1, 0]),
-        ort_vec= ort_vector(np.array([1, 0])),
         width=float('inf'))
     bucket = Obstacle(center = ground.center,\
         col_vec= ground.col_vec,
-        ort_vec= ground.ort_vec,
         width=0.5)
-    pl1_vec = np.array([cos(-pi/8), sin(-pi/8)])
-    pl1 = Obstacle(center = np.array([0.5, 3]),\
-        col_vec= pl1_vec,
-        ort_vec= ort_vector(pl1_vec),
-        width=4)
-    pl2_vec = np.array([cos(-pi/2), sin(-pi/2)])
-    pl2 = Obstacle(center = np.array([7, 6]),\
-        col_vec= pl2_vec,
-        ort_vec= ort_vector(pl2_vec),
-        width=2)
-    obstacles = [pl1, pl2]
     dt = 0.01
-    in_bucket, traj = bouncing_ball(ball_pos, ground, bucket, obstacles, dt)
-    print(in_bucket)
-    plot_traj(traj, ground, bucket, obstacles)'''
 
-    '''model = bouncing_ball
-    data = 
+    method = ImportanceSampling
+    model = bouncing_ball
+    data = [ball_pos, dt, ground, bucket]
     name = "Bouncing Ball"
     options = {
         'shrink': False,
         'plot_with_support': True,
-        'plot_style': 'line'
-    }'''
+        'plot_style': 'line+scatter'
+    }
+    
+    print("-- Bouncing Ball, {} --".format(method.name()))
+    mh = method(model, data)
+    dist = mh.infer(n=100)
+    
+    t = sorted(dist._support.values, key= lambda x: x[-1])
+    t1 = [elem[-2] for elem in t]
+    print('a')
+    '''Dresim = resimulate(dist, data)
+    print('c')'''
+    plot_prob(dist, data)
 
-
-    #test(model, data, name, method=ImportanceSampling, **options)
     #test(model, data, name, method=MetropolisHastings, **options)
+
+    
+
+
+    '''ball_pos = np.array([0.5, 10])
+    ground = Obstacle(center = np.array([0, 0]),\
+        col_vec= np.array([1, 0]),
+        width=float('inf'))
+    bucket = Obstacle(center = ground.center,\
+        col_vec= ground.col_vec,
+        width=0.5)
+    pl1_vec = np.array([cos(-pi/8), sin(-pi/8)])
+    pl1 = Obstacle(center = np.array([0.5, 3]),\
+        col_vec= pl1_vec,
+        width=4)
+    pl2_vec = np.array([cos(-pi/2), sin(-pi/2)])
+    pl2 = Obstacle(center = np.array([7, 6]),\
+        col_vec= pl2_vec,
+        width=2)
+    obstacles = [pl1, pl2]
+    dt = 0.01
+    in_bucket, traj = deterministic_bouncing_ball(ball_pos, dt, ground, bucket, obstacles)
+    print(in_bucket)
+    plot_traj(traj, ground, bucket, obstacles)'''
+
