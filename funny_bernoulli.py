@@ -1,6 +1,6 @@
 from inference import RejectionSampling, ImportanceSampling, MetropolisHastings, EnumerationSampling
 from distribution import bernoulli
-from test_inference import test, enumsamp_test
+from test_inference import test
 
 def funny_bernoulli(prob, _x):
     a = prob.sample(bernoulli(0.5))

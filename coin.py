@@ -1,6 +1,6 @@
 from inference import ImportanceSampling, MetropolisHastings, EnumerationSampling
 from distribution import bernoulli, uniform, uniform_support
-from test_inference import test, enumsamp_test
+from test_inference import test
 from numpy import linspace
 
 def coin(prob, data):
