@@ -1,5 +1,4 @@
-from typing import Callable, TypeVar, Generic, List, Any, NamedTuple
-from typing_extensions import Protocol
+from typing import Callable, TypeVar, Generic, List, Any, NamedTuple, Protocol
 from distribution import Distrib, support, uniform_support
 import utils
 from math import log, exp
@@ -27,6 +26,10 @@ class Prob(ABC):
 
     @abstractmethod
     def sample(self, d: Distrib[A]) -> A:
+        pass
+
+    @abstractmethod
+    def factor(self, s: float) -> None:
         pass
 
 
@@ -71,6 +74,9 @@ class RejectionSampling(InferenceMethod[A, B]):
 
         def sample(self, d: Distrib[A]) -> A:
             return d.draw()
+
+        def factor(self, _: float) -> None:
+            pass
 
     _model: CallableProtocol[Callable[[Prob, A], B]]
     _data: A
@@ -358,7 +364,7 @@ class HamiltonianMonteCarlo(InferenceMethod[A, B]):
         _sampleResults: List[Any]
         _i: int
         _len: int
-        _trueSample: int
+        _trueSample: bool
 
         def __init__(self, idx: int, scores: List[float], samples: List[float]):
             # print("INIT WITH SAMPLES :", samples)
@@ -368,6 +374,8 @@ class HamiltonianMonteCarlo(InferenceMethod[A, B]):
             self._len = len(samples)
             self._sampleResults = samples
             self._trueSample = len(samples) == 0
+            # print("TRUESAMPLE : ", self._trueSample)
+            # print("SAMPLES :", samples)
 
         def factor(self, s: float) -> None:
             self._scores[self._id] += s
@@ -382,15 +390,17 @@ class HamiltonianMonteCarlo(InferenceMethod[A, B]):
             return self._sampleResults.copy()
 
         def sample(self, d: Distrib[A]) -> A:
-            if self._trueSample:
-                v = d.draw()
-                # print("SAMPLE1 :", v, flush=True)
-                self._sampleResults.append(v)
-                self._i += 1
-                self._len += 1
-            elif self._i < self._len:
+            # if self._trueSample:
+            #     v = d.draw()
+            #     # print("SAMPLE1 :", v, flush=True)
+            #     self._sampleResults.append(v)
+            #     self._i += 1
+            #     self._len += 1
+            # elif self._i < self._len:
+            if self._i < self._len:
                 v = self._sampleResults[self._i]
-                # print('SAMPLE2 :', v, flush=True)
+                v = d.draw2(v)
+                self.observe(d, v)
                 self._i += 1
             else:
                 # print('SAMPLE3')
@@ -425,17 +435,23 @@ class HamiltonianMonteCarlo(InferenceMethod[A, B]):
                           eps: float, L: int):
         # print("Computing new state ...")
         q, p = q0.copy(), p0.copy()
-        for i in range(0, L + 1):
-            p = p - (eps / 2) * nd.Gradient(U(len(q)))(q)
+        for i in range(L):
+            # p = p - (eps / 2) * nd.Gradient(U(len(q)))(q)
+            p = p - (eps / 2) * np.array(utils.gradient(U(len(q)), q, 0.0001))
             q = q + eps * p
-            (q, p), (q0, p0) = self.extend(q, p, q0, p0, i, eps, U)
-            p = p - (eps / 2) * nd.Gradient(U(len(q)))(q)
+            # print(f"q = {q}, p = {p}")
+            (q, p), (q0, p0) = self.extend(q, p, q0, p0, i * eps, U)
+            # p = p - (eps / 2) * nd.Gradient(U(len(q)))(q)
+            p = p - (eps / 2) * np.array(utils.gradient(U(len(q)), q, 0.0001))
         return (q, p), (q0, p0)
 
-    def extend(self, q, p, q0, p0, t, eps, U):
+    def extend(self, q, p, q0, p0, t, U):
         # print("Extend ...")
-        q, p = q.copy(), p.copy()
-        q0, p0 = q0.copy(), p0.copy()
+        # q, p = q.copy(), p.copy()
+        # q0, p0 = q0.copy(), p0.copy()
+        q, p = list(q), list(p)
+        q0 = list(q0)
+        p0 = list(p0)
         while True:
             # print(q)
             try:
@@ -443,7 +459,7 @@ class HamiltonianMonteCarlo(InferenceMethod[A, B]):
                 # q (c'est à dire un ensemble de résultats de sample) est dans
                 # le domaine du modèle, c'est-à-dire qu'il y a assez de valeurs
                 # pour tous les sample que va appeler le modèle
-                self.model_logpdf(q)
+                U(len(q))(q)
                 break
             except DomainError:
                 x0 = norm.rvs()
@@ -460,7 +476,20 @@ class HamiltonianMonteCarlo(InferenceMethod[A, B]):
         scores = [0.] * n
         values = []
         logits = []
-        prob = self.HMCProb(0, scores, [])
+
+        (state, _), (_, _) = self.extend([], [], [], [], 0, lambda n: lambda q: -self.model_logpdf(q[:n]))
+
+        prob = self.HMCProb(0, scores, state)
+
+        # state0 = [1.093226789944025, 0.46179919341633946, -0.42287521801174344, -0.10236153707493756, 0.8475671404937191, -0.9504729483923995, -0.6597561483599956, -0.0005515655039916023, 0.9765556570346068, 0.9717289503506064, -0.12864929115445656, 0.40441063228386986, 0.7737931044480051, 0.6437629478826674, -0.5929933682584381, -0.6656567766373178, 0.07789285242845745, -0.42395810651760346, 0.5926198869567285, -0.06676937681845674, -0.7230708249049229]
+        # state1 = [1.0927526339222369, 0.4601490122556122, -0.4280947097342658, -0.10482786215887524, 0.8470821650621851, -0.9489371748050817, -0.6622424897224177, 0.0014252970864457992, 0.97702015530997, 0.9776528669199678, -0.12742638729673772, 0.40541335699141823, 0.7702357078774391, 0.6433083682040504, -0.5952978732491891, -0.6635979406465697, 0.07770143077765324, -0.42566373939359026, 0.5929726741999204, -0.06583805015249483, -0.7208094027616725]
+
+        # prob = self.HMCProb(0, scores, state0)
+        # self._model(prob, self._data)
+        # print(scores[0])
+
+
+        # return 
 
         lastValue = self._model(prob, self._data)
         lastScore = scores[0]
@@ -470,45 +499,93 @@ class HamiltonianMonteCarlo(InferenceMethod[A, B]):
         logits.append(lastScore)
 
         phi = lambda n: lambda q: \
-            multivariate_normal.pdf(q, mean=np.zeros(len(q)),
-                                    cov=np.identity(len(q)))
+            multivariate_normal.pdf(q, mean=np.zeros(n),
+                                    cov=np.identity(n)) \
+            if len(q) > 1 else \
+            np.array([multivariate_normal.pdf(q, mean=np.zeros(n),
+                                              cov=np.identity(n))])
 
         for i in range(1, n):
             print(f"Iteration {i}", flush=True)
 
-            if i % 15 == 0:
-                print('Restart ...')
-                scores = [0.]
-                prob = self.HMCProb(0, scores, [])
-                lastValue = self._model(prob, self._data)
-                lastScore = scores[0]
-                state = np.array(prob.get_samples_results())
-                values.append(lastValue)
-                logits.append(lastScore)
-                continue
+            # if i % 50 == 0:
+            #     print('Restart ...')
+            #     scores = [0.]
+            #     prob = self.HMCProb(0, scores, [])
+            #     lastValue = self._model(prob, self._data)
+            #     lastScore = scores[0]
+            #     state = np.array(prob.get_samples_results())
+            #     values.append(lastValue)
+            #     logits.append(lastScore)
+            #     continue
 
-            p0 = multivariate_normal.rvs(mean=np.zeros(len(state)),
-                                         cov=np.identity(len(state)))
+
+            # state = np.array([ 0.22335286,  0.94171858,  0.51335159,  0.99492119, -0.11005573, -0.10505592,
+            #                 -0.76476933, -0.38981185, -0.47405379,  0.24983975,  0.48748061, -0.16994817,
+            #                  -0.70619371,  0.98891105, -0.79866958, -0.49817204,  0.6379942,   0.61240333,
+            #                 0.26287404,  0.81438024])
+
+            # print(list(state))
+
+            print("STATE SIZE :", len(state))
+            # if len(state) > 1:
+            #     p0 = multivariate_normal.rvs(mean=np.zeros(len(state)),
+            #                                  cov=np.identity(len(state)))
+            # else:
+            #     p0 = np.array([
+            #         multivariate_normal.rvs(mean=np.zeros(len(state)),
+            #                                 cov=np.identity(len(state)))])
+
+            # p0 = np.array([norm.rvs(loc=0, scale=1) for j in range(len(state))])
+            p0 = norm.rvs(loc=0, scale=1, size=len(state))
             U = lambda n: lambda q: -self.model_logpdf(q[:n])
             (q, p), (q0, p0) = self.propose_new_state(state, p0, U, eps, L)
 
+            # print("OLD STATE = ", q0)
+            # print("NEW STATE = ", q)
+
+
+
+            # print("q0 = ", len(q0))
+            # print("q = ", len(q))
+            # print("p0 = ", len(p0))
+            # print("p = ", len(p))
+
             scores = [0., 0.]
+            # print("1q = ", len(q))
             prob0 = self.HMCProb(0, scores, q0)
+            # print("2q = ", len(q))
             prob = self.HMCProb(1, scores, q)
+            # print("3q = ", len(q))
             v0 = self._model(prob0, self._data)
+            # print("4q = ", len(q))
             v = self._model(prob, self._data)
+            # print("5q = ", len(q))
 
             l0 = np.concatenate((q0, p0))
             l = np.concatenate((q, p))
 
+            # print("q0 = ", len(q0))
+            # print("q = ", len(q))
+            # print("p0 = ", len(p0))
+            # print("p = ", len(p))
+
             # print(f"phi : {phi(2 * len(q))(l)}")
             # print(f"phi0 : {phi(2 * len(q0))(l0)}")
 
-            a = min(1, (v * phi(2 * len(q))(l)) / (v0 * phi(2 * len(q0))(l0)))
+            # print(2 * len(q))
+            # print(len(l))
+
+            a = min(1, (exp(scores[1]) * phi(2 * len(q))(l)) / (exp(scores[0]) * phi(2 * len(q0))(l0)))
             x = randuniform(0, 1)
             vf = v if x < a else v0
             pf = scores[1] if x < a else scores[0]
+            # print(pf, scores[0], scores[1])
             values.append(vf)
             logits.append(pf)
+
+            state = list(q)[:prob._i]
         # print(logits)
+
+        # print(values)
         return support(values, logits)

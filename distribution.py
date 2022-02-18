@@ -30,6 +30,7 @@ class Support(Generic[_A]):
 
 class Distrib(Generic[_A]):
     _sample: CallableProtocol[Callable[[], _A]]
+    _sample2: Optional[CallableProtocol[Callable[[float], float]]]
     _logpdf: CallableProtocol[Callable[[_A], float]]
     mean: Optional[Callable[[], _A]]
     var: Optional[Callable[[], float]]
@@ -41,6 +42,7 @@ class Distrib(Generic[_A]):
                  mean: Optional[Callable[[], _A]] = None,
                  var: Optional[Callable[[], float]] = None,
                  support: Optional[Support[_A]] = None,
+                 sample2: Optional[Callable[[float], float]] = None,
                  n: int = 10000):
         self._n = n
         self._sample = sample
@@ -49,9 +51,13 @@ class Distrib(Generic[_A]):
         self.var = var
         self._samples = None
         self._support = support
+        self._sample2 = sample2
 
     def draw(self) -> _A:
         return self._sample()
+
+    def draw2(self, x) -> float:
+        return self._sample2(x)
 
     def get_samples(self) -> List[_A]:
         if self._samples is not None:
@@ -151,9 +157,9 @@ def bernoulli(p: float, size: Optional[int] = None) -> Distrib[int]:
     return Distrib(sample, logpdf, mean, var, support)
 
 
-def binomial(p: float, n: int) -> Distrib[int]:
+def binomial(p: float, n: int, size: Optional[int] = None) -> Distrib[int]:
     assert(0 <= p <= 1 and 0 <= n)
-    sample  = lambda: sp.binom.rvs(n, p)
+    sample  = lambda: sp.binom.rvs(n, p, size=size)
     logpdf  = lambda x: sp.binom.logpmf(x, n, p)
     mean    = lambda: sp.binom.mean(n, p)
     var     = lambda: sp.binom.var(n, p)
@@ -224,7 +230,8 @@ def gaussian(mu: float, sigma: float, size: Optional[int] = None) \
     logpdf  = lambda x: sp.norm.logpdf(x, loc=mu, scale=sigma)
     mean    = lambda: sp.norm.mean(loc=mu, scale=sigma)
     var     = lambda: sp.norm.var(loc=mu, scale=sigma)
-    return Distrib(sample, logpdf, mean, var)
+    sample2 = lambda x: x
+    return Distrib(sample, logpdf, mean, var, sample2=sample2)
 
 
 def uniform(a: float, b: float, size: Optional[int] = None) -> Distrib[float]:
@@ -237,7 +244,8 @@ def uniform(a: float, b: float, size: Optional[int] = None) -> Distrib[float]:
     logpdf  = lambda x: sp.uniform.logpdf(x, loc=loc, scale=scale)
     mean    = lambda: sp.uniform.mean(loc=loc, scale=scale)
     var     = lambda: sp.uniform.var(loc=loc, scale=scale)
-    return Distrib(sample, logpdf, mean, var)
+    sample2 = lambda x: a + (b - a) * (1 / (1 + math.exp(-x)))
+    return Distrib(sample, logpdf, mean, var, sample2=sample2)
 
 
 if __name__ == '__main__':
