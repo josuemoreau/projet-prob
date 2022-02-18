@@ -1,7 +1,7 @@
 from typing import List, Tuple, Any, Callable, TypeVar, Optional, Generic, Dict
 import scipy.special as spspec
 from math import log, exp
-
+import numpy as np
 
 def shrink(values: List[Any], probs: List[float]) \
         -> Tuple[List[Any], List[float]]:
@@ -31,6 +31,22 @@ def findprob(values: List[Any], probs: List[float], v: Any) -> float:
         return probs[values.index(v)]
     except ValueError:
         return 0
+
+
+def gradient(f: Callable[[List[float]], float], x: List[float], eps: float):
+    # print("GRADIENT POINT :", x)
+    # print("VALUE AT x : ", f(x))
+    L = []
+    y = x.copy()
+    for i in range(len(x)):
+        y[i] += eps / 2
+        vr = f(x)
+        y[i] -= eps
+        vl = f(x)
+        # print(f"vr = {vr}, vl = {vl}")
+        y[i] += eps / 2
+        L.append((vr - vl) / eps)
+    return L
 
 
 if __name__ == '__main__':

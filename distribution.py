@@ -1,5 +1,4 @@
-from typing import List, Tuple, Callable, TypeVar, Optional, Generic, Any
-from typing_extensions import Protocol
+from typing import List, Tuple, Callable, TypeVar, Optional, Generic, Any, Protocol
 import scipy.stats as sp
 import math
 from math import log, comb, inf
@@ -31,6 +30,7 @@ class Support(Generic[_A]):
 
 class Distrib(Generic[_A]):
     _sample: CallableProtocol[Callable[[], _A]]
+    _sample2: Optional[CallableProtocol[Callable[[float], float]]]
     _logpdf: CallableProtocol[Callable[[_A], float]]
     mean: Optional[Callable[[], _A]]
     var: Optional[Callable[[], float]]
@@ -42,6 +42,7 @@ class Distrib(Generic[_A]):
                  mean: Optional[Callable[[], _A]] = None,
                  var: Optional[Callable[[], float]] = None,
                  support: Optional[Support[_A]] = None,
+                 sample2: Optional[Callable[[float], float]] = None,
                  n: int = 10000):
         self._n = n
         self._sample = sample
@@ -50,9 +51,13 @@ class Distrib(Generic[_A]):
         self.var = var
         self._samples = None
         self._support = support
+        self._sample2 = sample2
 
     def draw(self) -> _A:
         return self._sample()
+
+    def draw2(self, x) -> float:
+        return self._sample2(x)
 
     def get_samples(self) -> List[_A]:
         if self._samples is not None:
@@ -136,9 +141,9 @@ class Distrib(Generic[_A]):
         plt.show()
 
 
-def bernoulli(p: float) -> Distrib[int]:
+def bernoulli(p: float, size: Optional[int] = None) -> Distrib[int]:
     assert(0 <= p <= 1)
-    sample  = lambda: sp.bernoulli.rvs(p)
+    sample  = lambda: sp.bernoulli.rvs(p, size=size)
     logpdf  = lambda x: sp.bernoulli.logpmf(x, p)
     mean    = lambda: sp.bernoulli.mean(p)
     var     = lambda: sp.bernoulli.var(p)
@@ -152,9 +157,9 @@ def bernoulli(p: float) -> Distrib[int]:
     return Distrib(sample, logpdf, mean, var, support)
 
 
-def binomial(p: float, n: int) -> Distrib[int]:
+def binomial(p: float, n: int, size: Optional[int] = None) -> Distrib[int]:
     assert(0 <= p <= 1 and 0 <= n)
-    sample  = lambda: sp.binom.rvs(n, p)
+    sample  = lambda: sp.binom.rvs(n, p, size=size)
     logpdf  = lambda x: sp.binom.logpmf(x, n, p)
     mean    = lambda: sp.binom.mean(n, p)
     var     = lambda: sp.binom.var(n, p)
@@ -171,19 +176,21 @@ def binomial(p: float, n: int) -> Distrib[int]:
     return Distrib(sample, logpdf, mean, var, support)
 
 
-def dirac(v: _A) -> Distrib[_A]:
-    sample = lambda: v
+def dirac(v: _A, size: Optional[int] = None) -> Distrib[_A]:
+    sample = lambda: v if size is not None else [v] * size  # type: ignore
     logpdf = lambda x: 0. if x == v else -inf
     mean   = lambda: v
     var    = lambda: 0.
     return Distrib(sample, logpdf, mean, var)
 
 
-def support(values: List[_A], logits: List[float]) -> Distrib[_A]:
+def support(values: List[_A], logits: List[float],
+            size: Optional[int] = None) \
+        -> Distrib[_A]:
     assert(len(values) == len(logits))
     probs = utils.normalize(logits)
     sp_distrib = sp.rv_discrete(values=(range(len(values)), probs))
-    sample  = lambda: values[sp_distrib.rvs()]
+    sample  = lambda: values[sp_distrib.rvs(size=size)]
     logpdf  = lambda x: utils.findprob(values, probs, x)
     try:
         # if values support product with a floatting number
@@ -200,40 +207,45 @@ def support(values: List[_A], logits: List[float]) -> Distrib[_A]:
     return Distrib(sample, logpdf, mean, var, support)  # type: ignore
 
 
-def uniform_support(values: List[_A]) -> Distrib[_A]:
+def uniform_support(values: List[_A], size: Optional[int] = None) \
+        -> Distrib[_A]:
     logits = [0.]*len(values)
-    return support(values, logits)
+    return support(values, logits, size=size)
 
 
-def beta(a: float, b: float) -> Distrib[float]:
+def beta(a: float, b: float, size: Optional[int] = None) \
+        -> Distrib[float]:
     assert(a > 0. and b > 0.)
-    sample  = lambda: sp.beta.rvs(a, b)
+    sample  = lambda: sp.beta.rvs(a, b, size=size)
     logpdf  = lambda x: sp.beta.logpdf(x, a, b)
     mean    = lambda: sp.beta.mean(a, b)
     var     = lambda: sp.beta.var(a, b)
     return Distrib(sample, logpdf, mean, var)
 
 
-def gaussian(mu: float, sigma: float) -> Distrib[float]:
+def gaussian(mu: float, sigma: float, size: Optional[int] = None) \
+        -> Distrib[float]:
     assert(0. < sigma)
-    sample  = lambda: sp.norm.rvs(loc=mu, scale=sigma)
+    sample  = lambda: sp.norm.rvs(loc=mu, scale=sigma, size=size)
     logpdf  = lambda x: sp.norm.logpdf(x, loc=mu, scale=sigma)
     mean    = lambda: sp.norm.mean(loc=mu, scale=sigma)
     var     = lambda: sp.norm.var(loc=mu, scale=sigma)
-    return Distrib(sample, logpdf, mean, var)
+    sample2 = lambda x: x
+    return Distrib(sample, logpdf, mean, var, sample2=sample2)
 
 
-def uniform(a: float, b: float) -> Distrib[float]:
+def uniform(a: float, b: float, size: Optional[int] = None) -> Distrib[float]:
     assert(a <= b)
     #scipy.stats.uniform(loc=0, scale=1) tire selon une loi uniforme
     #dans l'intervalle [loc, loc+scale]
     loc = a
     scale = b-a
-    sample  = lambda: sp.uniform.rvs(loc=loc, scale=scale)
+    sample  = lambda: sp.uniform.rvs(loc=loc, scale=scale, size=size)
     logpdf  = lambda x: sp.uniform.logpdf(x, loc=loc, scale=scale)
     mean    = lambda: sp.uniform.mean(loc=loc, scale=scale)
     var     = lambda: sp.uniform.var(loc=loc, scale=scale)
-    return Distrib(sample, logpdf, mean, var)
+    sample2 = lambda x: a + (b - a) * (1 / (1 + math.exp(-x)))
+    return Distrib(sample, logpdf, mean, var, sample2=sample2)
 
 
 if __name__ == '__main__':
