@@ -1,7 +1,7 @@
 from typing import Callable, TypeVar, Type
 from inference import Prob, InferenceMethod, RejectionSampling, \
     ImportanceSampling, EnumerationSampling, MetropolisHastings
-from hmc import HamiltonianMonteCarlo
+# from hmc import HamiltonianMonteCarlo
     
 
 A = TypeVar('A')
@@ -18,10 +18,7 @@ def test(model: Callable[[Prob, A], B], data: A, name: str,
          -> None:
     print("-- {}, {} --".format(name, method.name()))
     mh = method(model, data)
-    if method == HamiltonianMonteCarlo:
-        dist = mh.infer(n=n, eps=eps, L=L)  # type: ignore
-    else:
-        dist = mh.infer(n=n)
+    dist = mh.infer(n=n)
     if shrink:
         dist.shrink_support()
     if print_support:

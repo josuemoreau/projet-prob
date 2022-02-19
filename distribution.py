@@ -91,7 +91,7 @@ class Distrib(Generic[_A]):
                                     [math.log(x) if x != 0. else -float('inf')
                                      for x in probs], probs)
 
-    def split_list(self) -> List[Support[Any]]:
+    def split_list(self) -> List[Distrib[Any]]:
         supp = self.get_support()
         assert (supp is not None)
         assert (len(supp.values) > 0)
@@ -101,10 +101,10 @@ class Distrib(Generic[_A]):
                     for v in supp.values))
         if all(len(v) == [] for v in supp.values):  # type: ignore
             return []
-        res: List[Support[Any]] = []
+        res: List[Distrib[Any]] = []
         for i in range(len(supp.values[0])):
             values = [v[i] for v in supp.values]  # type: ignore
-            res.append(support(values, supp.logits))  # type: ignore
+            res.append(support(values, supp.logits))
         return res
 
     def plot(self, plot_with_support: bool = False,
