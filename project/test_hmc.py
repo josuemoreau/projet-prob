@@ -38,7 +38,7 @@ def test(model: Callable[[Prob, A], B], data: A, name: str,
 def model(prob, data):
     q = prob.sample(gaussian(0, 1))
     s = 0
-    for i in range(40):
+    for _ in range(40):
         if s >= q:
             break
         s += prob.sample(gaussian(0, 1))

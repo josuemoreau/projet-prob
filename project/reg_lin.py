@@ -2,7 +2,7 @@ from inference import ImportanceSampling, MetropolisHastings, Prob, InferenceMet
 from distribution import uniform, gaussian
 import numpy as np
 from matplotlib import pyplot as plt
-from typing import Dict, TypeVar, Type, Optional, Callable, Tuple, NamedTuple, List
+from typing import Type, Optional, Callable, Tuple, NamedTuple, List
 
 Data = NamedTuple('Data', [
     ('N', int),

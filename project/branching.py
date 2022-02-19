@@ -1,6 +1,5 @@
 from types import NoneType
 from inference import RejectionSampling, EnumerationSampling, ImportanceSampling, MetropolisHastings, Prob
-from typing import List
 from distribution import bernoulli, binomial
 from test_inference import test
 

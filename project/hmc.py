@@ -1,4 +1,6 @@
 from inference import *
+import numpy as np
+from scipy.stats import norm, multivariate_normal
 
 
 class DomainError(Exception):
