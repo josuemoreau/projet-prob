@@ -1,7 +1,8 @@
 from typing import Callable, TypeVar, Type
 from inference import Prob, InferenceMethod, RejectionSampling, \
-    ImportanceSampling, EnumerationSampling, MetropolisHastings, \
-    HamiltonianMonteCarlo
+    ImportanceSampling, EnumerationSampling, MetropolisHastings
+from hmc import HamiltonianMonteCarlo
+    
 
 A = TypeVar('A')
 B = TypeVar('B')

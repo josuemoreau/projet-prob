@@ -1,15 +1,13 @@
-from inference import ImportanceSampling, HamiltonianMonteCarlo, MetropolisHastings
+from inference import ImportanceSampling, MetropolisHastings
+from hmc import HamiltonianMonteCarlo
 from distribution import gaussian, uniform
 from test_inference import test
-import math
+
 
 def model(prob, data):
-    # print('HELLO ???????', flush=True)
     q = prob.sample(gaussian(0, 1))
-    # r = prob.sample(gaussian(0, 1))
     s = 0
     for i in range(40):
-        # print(f"{q} : {s}")
         if s >= q:
             break
         s += prob.sample(gaussian(0, 1))
@@ -18,9 +16,6 @@ def model(prob, data):
         return 0
     prob.observe(gaussian(q, 1), s)
     return q
-    # prob.observe(gaussian(0, 1), q + r)
-    # prob.observe(gaussian(0, 1), q)
-    # return q
 
 def model(prob, data):
     start = prob.sample(uniform(0, 3))
@@ -34,10 +29,8 @@ def model(prob, data):
     return start
 
 def model(prob, data):
-    # print('HELLO ???????', flush=True)
     q = prob.sample(gaussian(0, 1))
     r = prob.sample(gaussian(0, 1))
-    # prob.observe(gaussian(0, 1), q + r)
     prob.observe(gaussian(0, 1), q)
     return q
 
@@ -50,19 +43,13 @@ if __name__ == '__main__':
     data = None
     name = "Test HMC"
     options = {
-        'n': 500,
+        'n': 100,
         'shrink': True,
         'plot_with_support': True,
         'plot_style': 'line+scatter',
         'eps': 0.1,
-        'L': 20
+        'L': 5
     }
-    #Tourne beaucoup trop longtemps
-    #test(model, data, name, method=RejectionSampling, **options)
-
-    #Fonctionne
-    # test(model, data, name, method=ImportanceSampling, **options)
-    # test(model, data, name, method=MetropolisHastings, **options)
 
     import cProfile
     import pstats
@@ -72,8 +59,4 @@ if __name__ == '__main__':
 
     stats = pstats.Stats(pr)
     stats.sort_stats(pstats.SortKey.TIME)
-    #stats.print_stats()
     stats.dump_stats(filename='profiling.prof')
-
-    #N'est pas applicable car uniforme n'a pas de support fini.
-    #test(model, data, name, method=EnumerationSampling, **options)
