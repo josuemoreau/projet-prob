@@ -142,6 +142,10 @@ class Distrib(Generic[_A]):
         plt.show()
 
 
+###########################################################
+#---------------- Liste de distributions -----------------#
+###########################################################
+
 def bernoulli(p: float, size: Optional[int] = None) -> Distrib[int]:
     assert(0 <= p <= 1)
     sample  = lambda: sp.bernoulli.rvs(p, size=size)

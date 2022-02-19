@@ -1,7 +1,6 @@
-from typing import List, Tuple, Any, Callable, TypeVar, Optional, Generic, Dict
+from typing import List, Tuple, Any, Callable, Dict
 import scipy.special as spspec
 from math import log, exp
-import numpy as np
 
 def shrink(values: List[Any], probs: List[float]) \
         -> Tuple[List[Any], List[float]]:

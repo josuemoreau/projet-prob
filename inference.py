@@ -5,9 +5,6 @@ from math import log, exp
 from random import randint
 from random import uniform as randuniform
 from abc import ABC, abstractmethod
-import numpy as np
-from scipy.stats import multivariate_normal, norm
-import numdifftools as nd
 
 A = TypeVar('A')
 B = TypeVar('B')

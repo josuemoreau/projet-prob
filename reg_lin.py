@@ -1,11 +1,13 @@
-from inference import ImportanceSampling, MetropolisHastings, EnumerationSampling
-from distribution import bernoulli, uniform, uniform_support, gaussian
-from test_inference import test
+from inference import ImportanceSampling, MetropolisHastings, Prob, InferenceMethod
+from distribution import uniform, gaussian
 import numpy as np
-import math
 from matplotlib import pyplot as plt
+from typing import Dict, TypeVar, Type, Optional, Callable, Tuple
 
-def linear_regression(prob, data):
+A = TypeVar('A')
+B = TypeVar('B')
+
+def linear_regression(prob: Prob, data) -> Tuple[float, float, float]:
     a = prob.sample(gaussian(data['a_lower'], data['a_upper']))
     b = prob.sample(uniform(data['b_lower'], data['b_upper']))
     s = prob.sample(uniform(0, 1))
@@ -14,7 +16,10 @@ def linear_regression(prob, data):
     return a, b, s
 
 
-def test_linear_regression(model, data, method, model_name, n=1000, only_best_values=None, plot_only_mean=True):
+def test_linear_regression(model: Callable[[Prob, A], B], data,\
+     method: Type[InferenceMethod[A, B]], model_name: str, n: int = 1000,
+     only_best_values: Optional[int]=None, plot_only_mean: bool=True) -> None:
+
     print("-- {}, {} --".format(model_name, method.name()))
     m = method(model, data)
     dist = m.infer(n=n)

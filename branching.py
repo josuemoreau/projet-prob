@@ -1,8 +1,10 @@
-from inference import RejectionSampling, EnumerationSampling, ImportanceSampling, MetropolisHastings
+from types import NoneType
+from inference import RejectionSampling, EnumerationSampling, ImportanceSampling, MetropolisHastings, Prob
+from typing import List
 from distribution import bernoulli, binomial
 from test_inference import test
 
-def branching(prob, data):
+def branching(prob: Prob, data: NoneType) -> int:
     n = prob.sample(binomial(0.5, 10))
     acc = 0
     for _ in range(n):
@@ -14,14 +16,14 @@ def branching(prob, data):
 
 if __name__ == '__main__':
     model = branching
-    data = []
+    data = None
     name = "Branching"
     options = {
         'shrink': True,
         'plot_with_support': True,
         'plot_style': 'stem'
     }
-    test(model, data, name, method=RejectionSampling, **options)
-    test(model, data, name, method=ImportanceSampling, **options)
-    test(model, data, name, method=EnumerationSampling, **options)
-    test(model, data, name, method=MetropolisHastings, **options)
+    test(model, data, name, method=RejectionSampling, **options)  # type: ignore
+    test(model, data, name, method=ImportanceSampling, **options)  # type: ignore
+    test(model, data, name, method=EnumerationSampling, **options)  # type: ignore
+    test(model, data, name, method=MetropolisHastings, **options)  # type: ignore
