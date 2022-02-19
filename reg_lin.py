@@ -1,6 +1,6 @@
 from inference import HamiltonianMonteCarlo, ImportanceSampling, MetropolisHastings, EnumerationSampling
 from distribution import bernoulli, uniform, uniform_support, gaussian
-from test_inference import test, enumsamp_test
+from test_inference import test
 import numpy as np
 import math
 from matplotlib import pyplot as plt
@@ -14,7 +14,7 @@ def linear_regression(prob, data):
     return a, b, s
 
 
-def test_linear_regression(model, data, method, n=1000, only_best_values=None, plot_only_mean=True):
+def test_linear_regression(model, data, method, model_name, n=1000, only_best_values=None, plot_only_mean=True):
     m = method(model, data)
     dist = m.infer(n=n)
     supp = dist.get_support()
@@ -43,11 +43,14 @@ def test_linear_regression(model, data, method, n=1000, only_best_values=None, p
     plt.plot(x, a * x + b, color='green', alpha=1, zorder=1)
     
     plt.scatter(data['x'], data['y'], color='red', zorder=1)
+    plt.title(f"{model_name} - {method.name()}")
     plt.show()
 
 
 if __name__ == '__main__':
     model = linear_regression
+    name = "Linear Regression"
+
     N = 8
     noise = 0.25
     lower = 0
@@ -68,5 +71,5 @@ if __name__ == '__main__':
         'b_upper': 10
     }
     
-    test_linear_regression(model, data, ImportanceSampling, 2000, 100, True)
-    test_linear_regression(model, data, MetropolisHastings, 2000, 100, True)
+    test_linear_regression(model, data, ImportanceSampling, name, 2000, 100, True)
+    test_linear_regression(model, data, MetropolisHastings, name, 2000, 100, True)
