@@ -91,22 +91,6 @@ class Distrib(Generic[_A]):
                                     [math.log(x) if x != 0. else -float('inf')
                                      for x in probs], probs)
 
-    def split_list(self) -> List[Distrib[Any]]:
-        supp = self.get_support()
-        assert (supp is not None)
-        assert (len(supp.values) > 0)
-        assert (isinstance(supp.values[0], List))
-        assert (all(isinstance(v, List)  # vérification pour le typage
-                    and len(v) == len(supp.values[0])
-                    for v in supp.values))
-        if all(len(v) == [] for v in supp.values):  # type: ignore
-            return []
-        res: List[Distrib[Any]] = []
-        for i in range(len(supp.values[0])):
-            values = [v[i] for v in supp.values]  # type: ignore
-            res.append(support(values, supp.logits))
-        return res
-
     def plot(self, plot_with_support: bool = False,
              plot_style: str = 'scatter',
              model_name: str = "", method_name: str = "") -> None:
@@ -140,6 +124,22 @@ class Distrib(Generic[_A]):
         plt.title(f"{model_name} - {method_name}")
         plt.grid(True)
         plt.show()
+
+def split_list(d: Distrib[List[_A]]) -> List[Distrib[_A]]:
+    supp = d.get_support()
+    assert (supp is not None)
+    assert (len(supp.values) > 0)
+    assert (isinstance(supp.values[0], List))
+    assert (all(isinstance(v, List)  # vérification pour le typage
+                and len(v) == len(supp.values[0])
+                for v in supp.values))
+    if all(len(v) == [] for v in supp.values):  # type: ignore
+        return []
+    res: List[Distrib[Any]] = []
+    for i in range(len(supp.values[0])):
+        values = [v[i] for v in supp.values]
+        res.append(support(values, supp.logits))
+    return res
 
 
 ###########################################################

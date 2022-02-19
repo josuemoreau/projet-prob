@@ -1,6 +1,6 @@
 from inference import ImportanceSampling, MetropolisHastings, Prob, InferenceMethod
 from typing import List, Type
-from distribution import Distrib, gaussian, support
+from distribution import Distrib, gaussian, support, split_list
 from numpy import linspace
 
 
@@ -21,7 +21,7 @@ def test_hmm(data: List[float], method: Type[InferenceMethod[List[float], List[f
     print("-- Hidden Markov Model, {} --".format(method.name()))
     m = method(hmm, data)
     dist = m.infer()
-    dists = dist.split_list()
+    dists = split_list(dist)
     m_x = [d.mean() for d in reversed(dists)]  # type: ignore
     for i in range(len(data)):
         print(f"{data[i]:.5f} >> {m_x[i]:.5f}")
