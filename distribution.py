@@ -251,18 +251,3 @@ def uniform(a: float, b: float, size: Optional[int] = None) -> Distrib[float]:
     var     = lambda: sp.uniform.var(loc=loc, scale=scale)
     sample2 = lambda x: a + (b - a) * (1 / (1 + math.exp(-x)))
     return Distrib(sample, logpdf, mean, var, sample2=sample2)
-
-
-if __name__ == '__main__':
-    '''p = 0.5
-    x1 = bernoulli(p)
-    x2 = binomial(p, 3)
-    x3 = dirac(3)
-    x4 = beta(2, 5)
-    x5 = gaussian(0, 1)
-    x6 = uniform(0, 2)'''
-    logits = [log(2), log(3), log(5)]
-    values = [0, 1, 3]
-    y = support(values, logits)
-    y.plot()
-    print('main')

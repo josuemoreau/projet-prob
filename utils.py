@@ -47,7 +47,3 @@ def gradient(f: Callable[[List[float]], float], x: List[float], eps: float) \
         y[i] += eps / 2
         L.append((vr - vl) / eps)
     return L
-
-
-if __name__ == '__main__':
-    print(normalize([log(2), log(3), log(5)]))

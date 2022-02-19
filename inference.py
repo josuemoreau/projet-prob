@@ -163,7 +163,7 @@ class EnumerationSampling(InferenceMethod[A, B]):
                     return
                 # Si on a fait tous les choix possibles, on revient en arrière.
                 else:
-                    self._path.pop() #i enlevé !!!!
+                    self._path.pop()
             # Si la prochaine trajectoire est nulle, on a fini.
             if len(self._path) == 0:
                 self._has_ended = True
@@ -208,6 +208,7 @@ class EnumerationSampling(InferenceMethod[A, B]):
         prob = self.EnumSampProb()
         values = []
         logits = []
+        #Tant qu'il reste des scénarios à examiner, on continue.
         while not prob._has_ended:
             try:
                 value = self._model(prob, self._data)
