@@ -1,4 +1,4 @@
-from inference import HamiltonianMonteCarlo, ImportanceSampling, MetropolisHastings, EnumerationSampling
+from inference import ImportanceSampling, MetropolisHastings, EnumerationSampling
 from distribution import bernoulli, uniform, uniform_support, gaussian
 from test_inference import test
 import numpy as np
@@ -15,6 +15,7 @@ def linear_regression(prob, data):
 
 
 def test_linear_regression(model, data, method, model_name, n=1000, only_best_values=None, plot_only_mean=True):
+    print("-- {}, {} --".format(model_name, method.name()))
     m = method(model, data)
     dist = m.infer(n=n)
     supp = dist.get_support()

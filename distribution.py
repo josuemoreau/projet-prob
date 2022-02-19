@@ -56,7 +56,8 @@ class Distrib(Generic[_A]):
     def draw(self) -> _A:
         return self._sample()
 
-    def draw2(self, x) -> float:
+    def draw2(self, x: float) -> float:
+        assert (self._sample2 is not None)
         return self._sample2(x)
 
     def get_samples(self) -> List[_A]:
@@ -181,7 +182,7 @@ def dirac(v: _A, size: Optional[int] = None) -> Distrib[_A]:
     logpdf = lambda x: 0. if x == v else -inf
     mean   = lambda: v
     var    = lambda: 0.
-    return Distrib(sample, logpdf, mean, var)
+    return Distrib(sample, logpdf, mean, var)  # type: ignore
 
 
 def support(values: List[_A], logits: List[float],

@@ -28,10 +28,6 @@ class Prob(ABC):
     def sample(self, d: Distrib[A]) -> A:
         pass
 
-    @abstractmethod
-    def factor(self, s: float) -> None:
-        pass
-
 
 class InferenceMethod(ABC, Generic[A, B]):
 
@@ -74,9 +70,6 @@ class RejectionSampling(InferenceMethod[A, B]):
 
         def sample(self, d: Distrib[A]) -> A:
             return d.draw()
-
-        def factor(self, _: float) -> None:
-            pass
 
     _model: CallableProtocol[Callable[[Prob, A], B]]
     _data: A
@@ -142,7 +135,7 @@ class ImportanceSampling(InferenceMethod[A, B]):
 
 
 _SampleState = NamedTuple('_SampleState', [('idx', int),
-    ('choices', List[A]), ('logits', List[float])])
+    ('choices', List[Any]), ('logits', List[float])])
 
 class EnumerationSampling(InferenceMethod[A, B]):
 
@@ -200,7 +193,7 @@ class EnumerationSampling(InferenceMethod[A, B]):
 
             idx, choices, logits = self._path[self._state_idx]
             self._score += logits[idx]  # Mult petits probs ou Add grands logits ?
-            return choices[idx]
+            return choices[idx]  # type: ignore
 
 
     _model: CallableProtocol[Callable[[Prob, A], B]]

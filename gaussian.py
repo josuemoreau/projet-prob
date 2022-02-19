@@ -20,7 +20,7 @@ if __name__ == '__main__':
         'shrink': False,
         'plot_with_support': True,
         'plot_style': 'line',
-        'print_support': True
+        'print_support': False
     }
     
     test(model, data, name, method=ImportanceSampling, **options)

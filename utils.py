@@ -33,7 +33,8 @@ def findprob(values: List[Any], probs: List[float], v: Any) -> float:
         return 0
 
 
-def gradient(f: Callable[[List[float]], float], x: List[float], eps: float):
+def gradient(f: Callable[[List[float]], float], x: List[float], eps: float) \
+        -> List[float]:
     # print("GRADIENT POINT :", x)
     # print("VALUE AT x : ", f(x))
     L = []
