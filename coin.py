@@ -1,19 +1,20 @@
-from inference import ImportanceSampling, MetropolisHastings, EnumerationSampling
+from inference import ImportanceSampling, MetropolisHastings, EnumerationSampling, Prob
+from typing import List
 from distribution import bernoulli, uniform, uniform_support
 from test_inference import test
 from numpy import linspace
 
-def coin(prob, data):
+def coin(prob: Prob, data: List[int]) -> float:
     z = prob.sample(uniform(0., 1.))
     for elem in data:
         prob.observe(bernoulli(z), elem)
     return z
 
-def discrete_coin(prob, data):
+def discrete_coin(prob: Prob, data: List[int]) -> float:
     z = prob.sample(uniform_support(list(linspace(0, 1, 100))))
     for elem in data:
         prob.observe(bernoulli(z), elem)
-    return z
+    return z  # type: ignore
 
 if __name__ == '__main__':
     model = coin
@@ -25,8 +26,8 @@ if __name__ == '__main__':
         'plot_style': 'line'
     }
 
-    test(model, data, name, method=ImportanceSampling, **options)
-    test(model, data, name, method=MetropolisHastings, **options)
+    test(model, data, name, method=ImportanceSampling, **options)  # type: ignore
+    test(model, data, name, method=MetropolisHastings, **options)  # type: ignore
 
     ## Version continue
 
@@ -49,5 +50,5 @@ if __name__ == '__main__':
     options['plot_style'] = 'stem'
     #rejsamp_test(model, data, name, plot_with_support, plot_style)
 
-    test(model, data, name, method=ImportanceSampling, **options)
-    test(model, data, name, method=EnumerationSampling, **options)
+    test(model, data, name, method=ImportanceSampling, **options)  # type: ignore
+    test(model, data, name, method=EnumerationSampling, **options)  # type: ignore

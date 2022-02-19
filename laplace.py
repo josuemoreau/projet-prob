@@ -1,8 +1,8 @@
-from inference import ImportanceSampling, MetropolisHastings
+from inference import ImportanceSampling, MetropolisHastings, Prob
 from distribution import binomial, uniform
 from test_inference import test
 
-def laplace(prob, data):
+def laplace(prob: Prob, data: None) -> float:
     p = prob.sample(uniform(0., 1.))
     """g = prob.sample(binomial(p, 493472)
     prob.assume(g = 241945)"""
@@ -22,8 +22,8 @@ if __name__ == '__main__':
     #test(model, data, name, method=RejectionSampling, **options)
 
     #Fonctionne
-    test(model, data, name, method=ImportanceSampling, **options)
-    test(model, data, name, method=MetropolisHastings, **options)
+    test(model, data, name, method=ImportanceSampling, **options)  # type: ignore
+    test(model, data, name, method=MetropolisHastings, **options)  # type: ignore
 
     #N'est pas applicable car uniforme n'a pas de support fini.
     #test(model, data, name, method=EnumerationSampling, **options)
